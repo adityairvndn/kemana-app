@@ -1,0 +1,8 @@
+Rincian Pesanan
+Subtotal untuk Produk Rp80.000
+Subtotal Pengiriman Rp10.000
+Diskon Pengiriman -Rp2.500
+Biaya Layanan Rp1.000
+Total Pembayaran Rp88.500
+Metode Pembayaran Transfer Bank
+Waktu Pemesanan 27-10-2026 21:03
