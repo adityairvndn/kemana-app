@@ -25,6 +25,19 @@ test('versi service worker sama dengan APP_VERSION dan package.json', function (
   assert.equal(JSON.parse(read('package.json')).version, CONFIG.APP_VERSION, 'versi di package.json harus sama');
 });
 
+test('pengaman versi service worker bisa mengenali config.js (kalau tidak, pembaruan selamanya ditolak)', function () {
+  // sw.js menolak memasang versi baru kalau teks config.js dari server tidak memuat baris ini persis.
+  assert.ok(read('js/config.js').indexOf("APP_VERSION: '" + CONFIG.APP_VERSION + "'") >= 0,
+    "js/config.js harus menulis versi persis sebagai APP_VERSION: '" + CONFIG.APP_VERSION + "' (kutip tunggal, satu spasi)");
+  assert.ok(sw.indexOf("\"APP_VERSION: '\" + VERSION + \"'\"") >= 0, 'pola pemeriksaan versi di sw.js berubah; samakan dengan tes ini');
+  assert.ok(shell.indexOf('js/config.js') >= 0, 'js/config.js harus ada di SHELL karena dipakai untuk memeriksa versi');
+});
+
+test('paket offline diunduh lewat alamat berversi, bukan alamat biasa yang bisa basi di CDN', function () {
+  assert.match(sw, /fetch\(new Request\(alamatVersi\(u\), \{ cache: 'reload' \}\)\)/);
+  assert.ok(!/addAll\(/.test(sw), 'jangan kembali ke cache.addAll(alamat biasa): CDN bisa menyajikan file versi lama');
+});
+
 test('semua file di SHELL ada', function () {
   shell.forEach(function (f) {
     if (f === './') return;

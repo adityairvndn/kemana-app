@@ -9,9 +9,9 @@
 //
 // PENTING: setiap merilis versi baru, naikkan VERSION di bawah DAN APP_VERSION di js/config.js.
 // Kalau tidak, ponsel yang sudah memasang aplikasi tidak akan menerima pembaruan.
-// Kesamaan keduanya dan kelengkapan daftar SHELL diperiksa oleh `npm test` (tests/sw.test.js).
+// Kesamaan keduanya dan kelengkapan daftar SHELL diperiksa oleh `npm test` (tests/rilis.test.js).
 
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const CACHE = 'kemana-' + VERSION;
 // Mesin pembaca nota (±4 MB) disimpan terpisah supaya tidak diunduh ulang setiap aplikasi diperbarui.
 const OCR_CACHE = 'kemana-ocr-v1';
@@ -23,11 +23,36 @@ const SHELL = [
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png', 'icons/icon-maskable-512.png'
 ];
 
+// Setelah rilis, CDN GitHub Pages bisa beberapa menit masih menyajikan sebagian file lama. Kalau paket
+// diisi dari situ, HP menyimpan campuran file lama dan baru, dan campuran itu dipakai terus sampai rilis
+// berikutnya. Karena itu tiap file diminta lewat alamat khusus versi ini (?v=VERSION) yang belum pernah
+// disimpan CDN, dan cache: 'reload' melewati cache HTTP browser.
+function alamatVersi(u) { return u + (u.indexOf('?') >= 0 ? '&' : '?') + 'v=' + encodeURIComponent(VERSION); }
+
+// Pengaman kedua: config.js dari server harus bertanda versi yang sama dengan service worker ini.
+// Kalau belum (server/CDN masih basi), pemasangan dibatalkan dan browser mencoba lagi saat aplikasi dibuka.
+function cocokVersi(teksConfig) { return teksConfig.indexOf("APP_VERSION: '" + VERSION + "'") >= 0; }
+
 self.addEventListener('install', function (event) {
   event.waitUntil(
-    // cache: 'reload' = ambil dari server, bukan dari cache HTTP browser (GitHub Pages menyimpan file ±10 menit).
-    caches.open(CACHE).then(function (c) {
-      return c.addAll(SHELL.map(function (u) { return new Request(u, { cache: 'reload' }); }));
+    Promise.all(SHELL.map(function (u) {
+      return fetch(new Request(alamatVersi(u), { cache: 'reload' })).then(function (res) {
+        if (!res.ok) throw new Error(u + ': HTTP ' + res.status);
+        return { url: u, res: res };
+      });
+    })).then(function (hasil) {
+      let cfg = null;
+      for (let i = 0; i < hasil.length; i++) if (hasil[i].url === 'js/config.js') cfg = hasil[i].res;
+      return cfg.clone().text().then(function (teks) {
+        if (!cocokVersi(teks)) throw new Error('config.js di server belum versi ' + VERSION);
+        // Semua file sudah lengkap dan benar: baru sekarang disimpan, sekaligus.
+        return caches.open(CACHE).then(function (c) {
+          return Promise.all(hasil.map(function (h) { return c.put(h.url, h.res); }));
+        }).catch(function (e) {
+          // Misalnya memori HP penuh: jangan tinggalkan paket setengah jadi.
+          return caches.delete(CACHE).then(function () { throw e; });
+        });
+      });
     }).then(function () {
       // Peralihan dari versi lama (kemana-v2) yang belum punya tombol "Pakai sekarang": langsung diganti, sekali ini saja.
       return caches.has('kemana-v2');
