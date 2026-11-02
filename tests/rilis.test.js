@@ -102,3 +102,16 @@ test('deklarasi dengan env()/min()/max() punya cadangan sebelumnya untuk browser
     });
   });
 });
+
+test('daftar kabar (lonceng): entri terbaru sama dengan APP_VERSION, urut menurun, tiap butir terisi', async function () {
+  const { KABAR, bandingVersi, kabarBaru } = await import('../js/kabar.js');
+  assert.equal(KABAR[0].versi, CONFIG.APP_VERSION, 'Tambahkan entri kabar untuk versi ' + CONFIG.APP_VERSION + ' di js/kabar.js (paling atas).');
+  for (let i = 1; i < KABAR.length; i++) assert.ok(bandingVersi(KABAR[i - 1].versi, KABAR[i].versi) > 0, 'urutan kabar harus dari yang terbaru');
+  KABAR.forEach(function (k) {
+    assert.ok(k.judul && k.tanggal && k.butir.length > 0, 'kabar ' + k.versi + ' belum lengkap');
+    k.butir.forEach(function (b) { assert.ok(String(b).trim().length > 5); });
+  });
+  assert.ok(bandingVersi('1.10.0', '1.9.0') > 0, 'versi dibandingkan sebagai angka');
+  assert.equal(kabarBaru(CONFIG.APP_VERSION).length, 0);
+  assert.equal(kabarBaru('1.0.0').length, KABAR.filter(function (k) { return k.versi !== '1.0.0'; }).length);
+});

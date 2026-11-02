@@ -150,6 +150,8 @@ npm test           # tes logika inti (Node 18+)
 
 Aplikasi tersimpan di HP sebagai satu paket berversi, jadi terbuka instan dan tetap jalan tanpa sinyal. Versi baru diunduh di latar belakang. Pengguna melihat pesan **Versi baru Kemana sudah siap** dan mengetuk **Pakai sekarang**. Kalau diabaikan, versi baru dipakai otomatis saat aplikasi dibuka lagi setelah ditutup. Data pengguna ada di spreadsheet, jadi tidak ikut hilang.
 
+**Setiap rilis, tambahkan satu entri di paling atas `js/kabar.js`** (daftar "Kabar Kemana" di tombol lonceng, ditulis dengan bahasa sehari-hari untuk pengguna awam). `npm test` memeriksa entri teratas sama dengan `APP_VERSION`. Pengguna melihat titik merah di lonceng sampai membuka kabarnya.
+
 **Setiap rilis, naikkan nomor versi di tiga tempat dengan angka yang sama:**
 
 1. `APP_VERSION` di `js/config.js`

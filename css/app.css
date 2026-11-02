@@ -176,6 +176,27 @@ a { color: var(--primary); }
 .status.warn { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
 .status.action { color: var(--on-primary); background: var(--primary); border-color: var(--primary); }
 .status.spin svg { animation: spin .9s linear infinite; }
+.bell {
+  position: relative; flex: none; width: 2.5rem; height: 2.5rem; margin-left: .4rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; color: var(--muted); touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.bell-dot {
+  position: absolute; top: .45rem; right: .5rem; width: .6rem; height: .6rem;
+  border-radius: 50%; background: var(--keluar); border: 2px solid var(--bg); box-sizing: content-box;
+}
+.bell-dot[hidden] { display: none; }
+.kabar-baru { margin: 0 0 .9rem; padding: .85rem 1rem; border-radius: .9rem; background: var(--primary-soft, var(--surface)); border: var(--border-w) solid var(--line); }
+.kabar-baru p { margin: 0 0 .6rem; }
+.kabar-item { padding: .8rem 0; border-top: var(--border-w) solid var(--line); }
+.kabar-item h3 { font-size: 1rem; font-weight: 800; margin: 0 0 .15rem; }
+.kabar-item small { color: var(--muted); }
+.kabar-item ul { margin: .45rem 0 0; padding-left: 1.15rem; }
+.kabar-item li { margin: .25rem 0; }
+.tag-baru { display: inline-block; margin-left: .4rem; padding: .05rem .5rem; border-radius: 999px; font-size: .72rem; font-weight: 800; background: var(--primary); color: var(--on-primary); vertical-align: middle; }
+.pilih-nota p { margin-bottom: 1rem; }
+.pilih-nota .btn { margin-bottom: .6rem; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .nav {
