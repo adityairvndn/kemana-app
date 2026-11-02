@@ -1,19 +1,40 @@
-// Service worker: aplikasi tetap bisa dibuka tanpa sinyal.
-// File aplikasi diambil dari jaringan dulu (supaya update langsung terpakai), cadangannya dari cache.
+// Service worker Kemana: aplikasi terbuka cepat dan tetap jalan tanpa sinyal.
+//
+// File aplikasi disimpan sebagai SATU paket berversi dan dilayani dari cache lebih dulu. Hasilnya:
+//  - pembukaan aplikasi instan, tanpa menunggu jaringan;
+//  - semua file selalu berasal dari versi yang sama (tidak pernah campuran lama dan baru).
+// Versi baru diunduh utuh di latar belakang. Baru dipakai setelah aplikasi ditutup, atau saat pengguna
+// mengetuk "Pakai sekarang", supaya isian yang sedang diketik tidak hilang.
 // Data keuangan TIDAK lewat sini: dikirim langsung ke Google Sheets API.
+//
+// PENTING: setiap merilis versi baru, naikkan VERSION di bawah DAN APP_VERSION di js/config.js.
+// Kalau tidak, ponsel yang sudah memasang aplikasi tidak akan menerima pembaruan.
+// Kesamaan keduanya dan kelengkapan daftar SHELL diperiksa oleh `npm test` (tests/sw.test.js).
 
-const CACHE = 'kemana-v2';
+const VERSION = '1.2.0';
+const CACHE = 'kemana-' + VERSION;
 // Mesin pembaca nota (±4 MB) disimpan terpisah supaya tidak diunduh ulang setiap aplikasi diperbarui.
 const OCR_CACHE = 'kemana-ocr-v1';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest',
+  'fonts/PlusJakartaSans-latin.woff2',
   'js/boot.js', 'js/app.js', 'js/config.js', 'js/format.js', 'js/schema.js', 'js/compute.js', 'js/google.js', 'js/sheets.js',
   'js/nota.js', 'js/ocr.js', 'js/ocr-worker.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png', 'icons/icon-maskable-512.png'
 ];
 
 self.addEventListener('install', function (event) {
-  event.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
+  event.waitUntil(
+    // cache: 'reload' = ambil dari server, bukan dari cache HTTP browser (GitHub Pages menyimpan file ±10 menit).
+    caches.open(CACHE).then(function (c) {
+      return c.addAll(SHELL.map(function (u) { return new Request(u, { cache: 'reload' }); }));
+    }).then(function () {
+      // Peralihan dari versi lama (kemana-v2) yang belum punya tombol "Pakai sekarang": langsung diganti, sekali ini saja.
+      return caches.has('kemana-v2');
+    }).then(function (lama) {
+      if (lama) return self.skipWaiting();
+    })
+  );
 });
 
 self.addEventListener('activate', function (event) {
@@ -22,14 +43,18 @@ self.addEventListener('activate', function (event) {
   }).then(function () { return self.clients.claim(); }));
 });
 
-function timeout(ms) { return new Promise(function (_, reject) { setTimeout(function () { reject(new Error('timeout')); }, ms); }); }
+self.addEventListener('message', function (event) {
+  if (event.data === 'skip') self.skipWaiting();
+});
 
 self.addEventListener('fetch', function (event) {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // Google API, login, dan sebagainya: langsung ke jaringan.
+  if (url.origin !== self.location.origin) return;
 
-  if (url.origin === self.location.origin && url.pathname.indexOf('/vendor/') >= 0) {
+  if (url.pathname.indexOf('/vendor/') >= 0) {
     // File besar yang tidak berubah: cache dulu, jaringan kalau belum ada.
     event.respondWith(caches.open(OCR_CACHE).then(function (cache) {
       return cache.match(req).then(function (hit) {
@@ -39,30 +64,12 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  if (url.origin === self.location.origin) {
-    // Jaringan dulu (maks. 4 detik), lalu cache.
-    event.respondWith(caches.open(CACHE).then(function (cache) {
-      const net = fetch(req, { cache: 'no-cache' }).then(function (res) {
-        if (res && res.ok) cache.put(req, res.clone());
-        return res;
-      });
-      return Promise.race([net, timeout(4000)]).catch(function () {
-        return cache.match(req, { ignoreSearch: true }).then(function (hit) {
-          if (hit) return hit;
-          if (req.mode === 'navigate') return cache.match('index.html');
-          return net;
-        });
-      });
-    }));
-    return;
-  }
-
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-    event.respondWith(caches.open(CACHE).then(function (cache) {
-      return cache.match(req).then(function (hit) {
-        return hit || fetch(req).then(function (res) { if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone()); return res; });
-      });
-    }));
-  }
-  // Selain itu (Google API, login) dibiarkan langsung ke jaringan.
+  // File aplikasi: dari paket berversi. ignoreSearch supaya "?demo" tetap dapat index.html dari cache.
+  event.respondWith(caches.open(CACHE).then(function (cache) {
+    return cache.match(req, { ignoreSearch: true }).then(function (hit) {
+      if (hit) return hit;
+      if (req.mode === 'navigate') return cache.match('index.html').then(function (h) { return h || fetch(req); });
+      return fetch(req);
+    });
+  }));
 });

@@ -16,7 +16,8 @@ const esc = F.escapeHtml;
 
 const LS = {
   get: function (k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-  set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* penuh / diblokir */ } },
+  /** @returns {boolean} false kalau penyimpanan penuh atau diblokir (mode pribadi, dsb.) */
+  set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
   del: function (k) { try { localStorage.removeItem(k); } catch (e) { /* abaikan */ } }
 };
 
@@ -70,7 +71,18 @@ const st = {
 st.form = blankForm();
 
 function savePrefs() { LS.set('ck.prefs', prefs); }
-function saveQueue() { LS.set('ck.queue', st.queue); }
+let queueWarned = false;
+function saveQueue() {
+  // Antrean adalah satu-satunya salinan catatan yang belum terkirim, jadi gagal menyimpannya harus diberi tahu.
+  if (LS.set('ck.queue', st.queue)) { queueWarned = false; return; }
+  if (!queueWarned && st.queue.length) {
+    queueWarned = true;
+    // Ditunda sebentar supaya tidak tertimpa toast "tersimpan" yang dipanggil tepat sesudah commit.
+    setTimeout(function () {
+      toast('Penyimpanan di HP penuh atau dibatasi. Catatan yang belum terkirim bisa hilang kalau halaman ditutup. Sambungkan internet untuk mengirimnya.', '', null, 9000);
+    }, 0);
+  }
+}
 function snapKey() { return st.mode === 'demo' ? 'ck.snap.demo' : 'ck.snap.google'; }
 function saveSnap() { LS.set(snapKey(), st.snap); }
 
@@ -282,14 +294,31 @@ function applyTheme() {
 }
 
 let toastTimer = null, toastFn = null;
-function toast(msg, actionLabel, fn) {
+
+function hideToast() {
+  clearTimeout(toastTimer);
+  toastFn = null;
+  $('toast').className = 'toast';
+}
+
+/**
+ * Tampilkan pesan singkat. Menghilang sendiri; ketuk pesannya untuk menutup lebih cepat.
+ * @param {string} msg
+ * @param {string=} actionLabel  teks tombol aksi (mis. "Batalkan")
+ * @param {Function=} fn         dipanggil saat tombol aksi diketuk
+ * @param {number=} ms           lama tampil; 0 = tetap sampai ditutup
+ */
+function toast(msg, actionLabel, fn, ms) {
+  const el = $('toast');
+  clearTimeout(toastTimer);
   $('toastText').textContent = msg;
   toastFn = fn || null;
   $('toastAction').hidden = !fn;
-  $('toastAction').textContent = actionLabel || '';
-  $('toast').className = 'toast show';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(function () { $('toast').className = 'toast'; }, fn ? 6000 : 3500);
+  $('toastAction').textContent = fn ? (actionLabel || 'OK') : '';
+  el.className = 'toast show';
+  // Waktu baca menyesuaikan panjang pesan (min. 3,5 dtk); dengan tombol aksi dibuat lebih lama.
+  const dur = ms !== undefined ? ms : Math.max(fn ? 6000 : 3500, Math.min(10000, msg.length * 55));
+  if (dur > 0) toastTimer = setTimeout(hideToast, dur);
 }
 
 function renderStatus() {
@@ -311,6 +340,8 @@ function renderStatus() {
 
 function renderAll() {
   if ($('shell').hidden) return;
+  document.body.setAttribute('data-view', 'app');
+  document.body.setAttribute('data-tab', st.tab);
   $('title').textContent = st.edit && st.tab === 'catat' ? 'Ubah transaksi' : TITLES[st.tab];
   ['catat', 'riwayat', 'ringkasan', 'pengaturan'].forEach(function (t) {
     $('tab-' + t).hidden = t !== st.tab;
@@ -414,9 +445,12 @@ function renderQuick() {
       }).join('') + '</div>';
     }
   }
-  el.innerHTML = h;
+  if (el._h !== h) { el._h = h; el.innerHTML = h; }
   el.hidden = !h;
 }
+
+/** Getaran singkat sebagai tanda berhasil (Android; iOS mengabaikannya). */
+function getar(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* abaikan */ } }
 
 function simpanCepat(i) {
   const c = st.cepat[i];
@@ -426,6 +460,7 @@ function simpanCepat(i) {
     ke_dompet: c.jenis === JK.TRANSFER ? c.ke_dompet : '', kategori: c.jenis === JK.TRANSFER ? '' : c.kategori, nominal: c.nominal, catatan: c.catatan
   };
   commit({ t: 'add', item: item });
+  getar(12);
   toast(labelCepat(c) + ' ' + F.rupiah(c.nominal) + ' tersimpan.', 'Batalkan', function () { commit({ t: 'del', id: item.id }); });
 }
 
@@ -515,7 +550,9 @@ function simpan() {
     st.edit = null;
     st.form = blankForm();
     st.tab = 'riwayat';
+    window.scrollTo(0, 0);
     commit({ t: 'upd', id: id, item: item });
+    getar(12);
     toast('Perubahan disimpan.', 'Batalkan', function () { commit({ t: 'upd', id: id, item: before }); });
     return;
   }
@@ -525,7 +562,9 @@ function simpan() {
   prefs.dompet = f.dompet;
   savePrefs();
   st.form = Object.assign(blankForm(), { jenis: f.jenis, dompet: f.dompet, ke: f.ke, tanggal: f.tanggal });
+  window.scrollTo(0, 0);
   commit({ t: 'add', item: item });
+  getar(12);
   toast(capital(KATA[item.jenis]) + ' ' + F.rupiah(item.nominal) + ' tersimpan.', 'Batalkan', function () {
     commit({ t: 'del', id: item.id });
   });
@@ -558,6 +597,7 @@ function hapusTrx() {
     st.edit = null;
     st.form = blankForm();
     st.tab = 'riwayat';
+    window.scrollTo(0, 0);
     commit({ t: 'del', id: t.id });
     toast('Transaksi dihapus.', 'Batalkan', function () { commit({ t: 'add', item: copy }); });
   });
@@ -747,6 +787,7 @@ function renderPengaturan() {
   }
 
   h += '<h2 class="section-title">Aplikasi</h2><div class="list">';
+  if (swMenunggu) h += '<button type="button" class="list-item" data-act="pakai-update"><span class="grow"><span><b>Versi baru siap</b></span><small>Ketuk untuk memakainya sekarang. Halaman dimuat ulang sebentar.</small></span>' + ICON_CHEV + '</button>';
   if (st.installEvt) h += '<button type="button" class="list-item" data-act="pasang"><span class="grow"><span>Pasang di layar utama</span><small>Buka seperti aplikasi biasa</small></span>' + ICON_CHEV + '</button>';
   else if (!standalone()) h += '<div class="list-item"><span class="grow"><span>Pasang di layar utama</span><small>' + (isIOS() ? 'Safari: ketuk Bagikan, lalu Tambah ke Layar Utama.' : 'Chrome: menu ⋮, lalu Instal aplikasi atau Tambahkan ke layar utama.') + '</small></span></div>';
   h += '<div class="list-item"><span class="grow"><span>Versi ' + esc(CONFIG.APP_VERSION) + '</span><small>Format spreadsheet versi ' + S.SCHEMA_VERSION + '</small></span></div>';
@@ -768,19 +809,74 @@ function isIOS() {
 // Lembar: form dompet/kategori, konfirmasi, catatan migrasi
 
 let sheetCtx = null;
-function openSheet(html, ctx) {
-  sheetCtx = ctx || {};
-  $('sheetBox').innerHTML = html;
-  $('overlay').hidden = false;
-  const first = $('sheetBox').querySelector('input, button');
-  if (first && ctx && ctx.focus !== false) setTimeout(function () { try { first.focus(); } catch (e) { /* abaikan */ } }, 50);
+let sheetOpener = null;     // elemen yang punya fokus sebelum lembar dibuka, untuk dikembalikan saat ditutup
+let sheetEntry = false;     // ada entri riwayat browser untuk lembar yang terbuka (supaya tombol Back menutup lembar)
+let sheetBackTimer = null, skipPop = false;
+
+function focusEl(el) {
+  try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (e2) { /* abaikan */ } }
 }
-function closeSheet(result) {
+
+function openSheet(html, ctx) {
+  const wasOpen = !$('overlay').hidden;
+  sheetCtx = ctx || {};
+  if (!wasOpen) sheetOpener = document.activeElement;
+  const box = $('sheetBox');
+  box.innerHTML = html;
+  const judul = box.querySelector('h2');
+  if (judul) { judul.id = 'sheetJudul'; box.setAttribute('aria-labelledby', 'sheetJudul'); } else box.removeAttribute('aria-labelledby');
+  box.setAttribute('tabindex', '-1');
+  box.scrollTop = 0;
+  $('overlay').hidden = false;
+  document.documentElement.classList.add('sheet-open');
+  hideToast();
+
+  // Tombol Back di HP menutup lembar, bukan keluar dari aplikasi.
+  clearTimeout(sheetBackTimer);
+  if (!sheetEntry) { try { history.pushState({ kemanaLembar: 1 }, ''); sheetEntry = true; } catch (e) { /* abaikan */ } }
+
+  // Fokus langsung (bukan lewat timer) supaya keyboard layar ikut muncul di iOS. Lembar tanpa isian
+  // (konfirmasi) memfokuskan lembarnya sendiri supaya pembaca layar membaca judulnya.
+  const first = box.querySelector('input:not([type="hidden"]), button');
+  if (first && ctx && ctx.focus !== false) focusEl(first); else focusEl(box);
+}
+
+function closeSheet(result, dariBack) {
+  const wasOpen = !$('overlay').hidden;
   $('overlay').hidden = true;
   $('sheetBox').innerHTML = '';
+  document.documentElement.classList.remove('sheet-open');
   const c = sheetCtx;
   sheetCtx = null;
+  if (dariBack) sheetEntry = false;
+  else if (sheetEntry) {
+    // Entri riwayat dilepas setelah jeda singkat; kalau lembar lain langsung dibuka, entrinya dipakai ulang.
+    clearTimeout(sheetBackTimer);
+    sheetBackTimer = setTimeout(function () {
+      if (sheetEntry && $('overlay').hidden) { sheetEntry = false; skipPop = true; try { history.back(); } catch (e) { skipPop = false; } }
+    }, 0);
+  }
+  if (wasOpen && sheetOpener && document.body.contains(sheetOpener) && !sheetOpener.disabled) focusEl(sheetOpener);
+  if (wasOpen) sheetOpener = null;
   if (c && c.resolve) c.resolve(result);
+}
+
+window.addEventListener('popstate', function () {
+  if (skipPop) { skipPop = false; return; }
+  if (sheetEntry) { sheetEntry = false; if (!$('overlay').hidden) closeSheet(false, true); }
+});
+
+/** Tab / Shift+Tab berputar di dalam lembar (papan ketik, pembaca layar), tidak lari ke halaman di belakangnya. */
+function trapTab(ev) {
+  const box = $('sheetBox');
+  const list = Array.prototype.filter.call(
+    box.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled])'),
+    function (e) { return e.offsetParent !== null; });
+  if (!list.length) { ev.preventDefault(); focusEl(box); return; }
+  const first = list[0], last = list[list.length - 1], cur = document.activeElement;
+  if (!box.contains(cur) || (cur === box && !ev.shiftKey)) { ev.preventDefault(); focusEl(ev.shiftKey ? last : first); }
+  else if (ev.shiftKey && (cur === first || cur === box)) { ev.preventDefault(); focusEl(last); }
+  else if (!ev.shiftKey && cur === last) { ev.preventDefault(); focusEl(first); }
 }
 
 function confirmBox(o) {
@@ -1107,6 +1203,7 @@ function renderScreen() {
 
 function showScreen(s) {
   st.screen = s;
+  document.body.setAttribute('data-view', 'screen');
   $('shell').hidden = true;
   $('screen').hidden = false;
   renderScreen();
@@ -1308,8 +1405,8 @@ const ACT = {
         st.snap.transaksi = st.snap.transaksi.filter(function (t) { return ids.indexOf(t.id) < 0; });
       }).then(function (ok2) {
         if (!ok2) return;
-        toast('Data contoh dihapus.');
         openSetup('Sekarang isi saldo aslimu');
+        toast('Data contoh dihapus.');
       });
     });
   },
@@ -1360,6 +1457,7 @@ const ACT = {
       resetToWelcome();
     });
   },
+  'pakai-update': pakaiVersiBaru,
   pasang: function () {
     if (!st.installEvt) return;
     st.installEvt.prompt();
@@ -1375,24 +1473,40 @@ document.addEventListener('click', function (ev) {
   const fn = ACT[el.getAttribute('data-act')];
   if (fn) fn(el, ev);
 });
-$('overlay').addEventListener('click', function (ev) { if (ev.target === $('overlay')) closeSheet(false); });
-$('toastAction').addEventListener('click', function () {
+$('overlay').addEventListener('click', function (ev) {
+  if (ev.target !== $('overlay')) return;
+  if (sheetCtx && sheetCtx.dirty) {
+    // Ada isian yang belum disimpan: ketukan nyasar di luar lembar tidak boleh membuangnya.
+    const b = $('sheetBox');
+    b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge');
+    return;
+  }
+  closeSheet(false);
+});
+document.addEventListener('input', function (ev) {
+  if (sheetCtx && ev.target && ev.target.closest && ev.target.closest('#sheetBox')) sheetCtx.dirty = true;
+});
+$('toastAction').addEventListener('click', function (ev) {
+  ev.stopPropagation();
   const fn = toastFn;
-  toastFn = null;
-  $('toast').className = 'toast';
+  hideToast();
   if (fn) fn();
 });
+// Ketuk bagian pesan untuk menutup (berguna kalau pesannya menutupi sesuatu).
+$('toast').addEventListener('click', hideToast);
 
 // tahan tombol hapus = kosongkan nominal
 let holdTimer = null, heldClear = false;
-$('keypad').addEventListener('pointerdown', function (ev) {
+const ADA_POINTER = !!window.PointerEvent;
+$('keypad').addEventListener(ADA_POINTER ? 'pointerdown' : 'touchstart', function (ev) {
   const b = ev.target.closest('[data-k="del"]');
   if (!b) return;
   heldClear = false;
-  holdTimer = setTimeout(function () { heldClear = true; st.form.nominal = ''; renderAmount(); try { navigator.vibrate && navigator.vibrate(15); } catch (e) { /* abaikan */ } }, 450);
-});
-['pointerup', 'pointerleave', 'pointercancel'].forEach(function (t) {
-  $('keypad').addEventListener(t, function () { clearTimeout(holdTimer); });
+  clearTimeout(holdTimer);
+  holdTimer = setTimeout(function () { heldClear = true; st.form.nominal = ''; renderAmount(); getar(15); }, 450);
+}, ADA_POINTER ? undefined : { passive: true });
+(ADA_POINTER ? ['pointerup', 'pointerleave', 'pointercancel'] : ['touchend', 'touchcancel', 'touchmove']).forEach(function (t) {
+  $('keypad').addEventListener(t, function () { clearTimeout(holdTimer); }, { passive: true });
 });
 
 $('notaFile').addEventListener('change', function () { const f = this.files && this.files[0]; if (f) prosesNota(f); });
@@ -1423,6 +1537,7 @@ document.addEventListener('input', function (ev) {
 document.addEventListener('keydown', function (ev) {
   if (!$('overlay').hidden) {
     if (ev.key === 'Escape') closeSheet(false);
+    if (ev.key === 'Tab') trapTab(ev);
     if (ev.key === 'Enter' && ev.target.tagName === 'INPUT' && sheetCtx && sheetCtx.kind) {
       ev.preventDefault();
       if (sheetCtx.kind === 'saldo') cocokkan();
@@ -1479,9 +1594,41 @@ function boot() {
     resetToWelcome();
   }
 
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { /* abaikan */ }); });
+  daftarkanSW();
+}
+
+/**
+ * Service worker: aplikasi tetap terbuka tanpa sinyal. Versi baru disiapkan di latar belakang dan
+ * ditawarkan lewat pesan ("Pakai sekarang"); tidak dimuat ulang diam-diam supaya isian tidak hilang.
+ */
+let swMenunggu = null, swDiminta = false;   // versi baru yang sudah diunduh dan menunggu dipakai
+
+function pakaiVersiBaru() {
+  if (!swMenunggu) return;
+  swDiminta = true;
+  swMenunggu.postMessage('skip');
+}
+
+function daftarkanSW() {
+  if (!('serviceWorker' in navigator)) return;
+  if (!(location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) return;
+  navigator.serviceWorker.addEventListener('controllerchange', function () { if (swDiminta) location.reload(); });
+  function tawarkan(w) {
+    swMenunggu = w;
+    // Tawaran juga tersedia terus di Pengaturan, karena toast tergantikan pesan lain.
+    toast('Versi baru Kemana sudah siap.', 'Pakai sekarang', pakaiVersiBaru, 0);
+    if (st.tab === 'pengaturan' && !$('shell').hidden) renderPengaturan();
   }
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      if (reg.waiting && navigator.serviceWorker.controller) tawarkan(reg.waiting);
+      reg.addEventListener('updatefound', function () {
+        const w = reg.installing;
+        if (!w) return;
+        w.addEventListener('statechange', function () { if (w.state === 'installed' && navigator.serviceWorker.controller) tawarkan(w); });
+      });
+    }).catch(function () { /* abaikan */ });
+  });
 }
 
 boot();

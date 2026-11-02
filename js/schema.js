@@ -10,7 +10,7 @@
 //   2. Tambahkan kolom di SHEETS dengan `since: <versi baru>` (dan `def` kalau perlu nilai bawaan).
 //   Aplikasi akan menambahkan kolom itu ke spreadsheet pengguna dan memberi tahu mereka.
 
-import { parseDateText, serialToISO, serialToStamp, parseNumberText, addDays, isoToSerial } from './format.js';
+import { parseDateText, serialToISO, serialToStamp, parseNumberText, addDays, addMonths, isoToSerial } from './format.js';
 
 export const SCHEMA_VERSION = 1;
 export const APP_PROPERTY = 'kemana';   // penanda file di Google Drive (appProperties)
@@ -307,11 +307,22 @@ export const CONTOH_PREFIX = 'contoh-';
 // Kategori khusus untuk hasil "Cocokkan saldo": uang yang berubah tanpa tercatat.
 export const KATEGORI_SELISIH = 'Tidak tercatat';
 
-/** Transaksi contoh, tanggalnya relatif terhadap hari ini supaya ringkasan langsung terisi. */
+/**
+ * Transaksi contoh, tanggalnya relatif terhadap hari ini supaya ringkasan langsung terisi.
+ * Di awal bulan, "7 hari lalu" jatuh ke bulan lalu dan Ringkasan bulan ini kosong (pemasukan Rp 0),
+ * jadi contoh "bulan ini" dijaga tetap di bulan ini dan contoh "bulan lalu" tetap di bulan lalu.
+ */
 export function contohTransaksi(today, stamp) {
+  const ym = today.slice(0, 7), ymLalu = addMonths(ym, -1), hari = Number(today.slice(8, 10)), awal = ym + '-01';
+  const tanggalContoh = function (hariLalu) {
+    const d = addDays(today, -hariLalu);
+    if (hariLalu <= 9 && d.slice(0, 7) !== ym) return addDays(today, -(hariLalu % hari));
+    if (hariLalu >= 30 && d.slice(0, 7) < ymLalu) return addDays(awal, -(hariLalu - 30));
+    return d;
+  };
   const t = function (n, hariLalu, jenis, dompet, kategori, nominal, catatan, ke) {
     return {
-      id: CONTOH_PREFIX + (n < 10 ? '0' : '') + n, tanggal: addDays(today, -hariLalu), jenis: jenis, dompet: dompet,
+      id: CONTOH_PREFIX + (n < 10 ? '0' : '') + n, tanggal: tanggalContoh(hariLalu), jenis: jenis, dompet: dompet,
       ke_dompet: ke || '', kategori: kategori || '', nominal: nominal, catatan: 'Contoh: ' + catatan, dicatat: stamp
     };
   };
