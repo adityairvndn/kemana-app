@@ -158,6 +158,8 @@ Aplikasi tersimpan di HP sebagai satu paket berversi, jadi terbuka instan dan te
 
 Kalau `VERSION` di `sw.js` lupa dinaikkan, HP yang sudah memasang aplikasi **tidak akan menerima pembaruan**. Karena itu `npm test` memeriksa ketiganya sama, dan juga memeriksa bahwa semua file aplikasi masuk daftar `SHELL` di `sw.js`. File baru yang tidak masuk daftar itu tidak akan tersedia saat offline.
 
+Biarkan baris `APP_VERSION: '…'` di `js/config.js` dalam format persis itu (kutip tunggal). Setelah rilis, CDN GitHub Pages bisa beberapa menit masih menyajikan sebagian file lama. Supaya HP tidak menyimpan campuran file lama dan baru, `sw.js` mengunduh tiap file lewat alamat berversi (`?v=…`) dan menolak memasang kalau `config.js` dari server belum bertanda versi yang sama. Browser mencoba lagi saat aplikasi dibuka berikutnya. Jadi wajar kalau pesan "Versi baru siap" baru muncul beberapa menit setelah merge.
+
 **Kalau versi baru butuh kolom atau sheet baru**, lakukan juga ini sebelum push:
 
 1. Di `js/schema.js`:

@@ -1,6 +1,6 @@
 {
   "name": "kemana",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Kemana: aplikasi pencatat keuangan sederhana dengan Google Sheets sebagai database.",
   "type": "module",
