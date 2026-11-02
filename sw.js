@@ -11,7 +11,7 @@
 // Kalau tidak, ponsel yang sudah memasang aplikasi tidak akan menerima pembaruan.
 // Kesamaan keduanya dan kelengkapan daftar SHELL diperiksa oleh `npm test` (tests/rilis.test.js).
 
-const VERSION = '1.2.1';
+const VERSION = '1.3.0';
 const CACHE = 'kemana-' + VERSION;
 // Mesin pembaca nota (±4 MB) disimpan terpisah supaya tidak diunduh ulang setiap aplikasi diperbarui.
 const OCR_CACHE = 'kemana-ocr-v1';
@@ -19,7 +19,7 @@ const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest',
   'fonts/PlusJakartaSans-latin.woff2',
   'js/boot.js', 'js/app.js', 'js/config.js', 'js/format.js', 'js/schema.js', 'js/compute.js', 'js/google.js', 'js/sheets.js',
-  'js/nota.js', 'js/ocr.js', 'js/ocr-worker.js',
+  'js/kabar.js', 'js/nota.js', 'js/ocr.js', 'js/ocr-worker.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png', 'icons/icon-maskable-512.png'
 ];
 

@@ -9,6 +9,7 @@ import * as S from './schema.js';
 import * as C from './compute.js';
 import * as F from './format.js';
 import * as N from './nota.js';
+import * as K from './kabar.js';
 
 const JK = S.JENIS;
 const $ = function (id) { return document.getElementById(id); };
@@ -42,7 +43,7 @@ const ICON_CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" 
 // ---------------------------------------------------------------------------
 // State
 
-const prefs = Object.assign({ tema: 'otomatis', teks: 'normal', dompet: '', versi: '' }, LS.get('ck.prefs', {}));
+const prefs = Object.assign({ tema: 'otomatis', teks: 'normal', dompet: '', versi: '', kabarDilihat: '' }, LS.get('ck.prefs', {}));
 if (!THEMES.some(function (t) { return t[0] === prefs.tema; })) prefs.tema = 'otomatis';
 const st = {
   mode: LS.get('ck.mode', null),          // 'google' | 'demo' | null
@@ -321,7 +322,14 @@ function toast(msg, actionLabel, fn, ms) {
   if (dur > 0) toastTimer = setTimeout(hideToast, dur);
 }
 
+function renderBell() {
+  const ada = !!swMenunggu || K.kabarBaru(prefs.kabarDilihat || CONFIG.APP_VERSION).length > 0;
+  $('bellDot').hidden = !ada;
+  $('bell').setAttribute('aria-label', ada ? 'Kabar dan pembaruan, ada yang baru' : 'Kabar dan pembaruan');
+}
+
 function renderStatus() {
+  renderBell();
   const el = $('status');
   let cls = '', txt = '', icon = '';
   if (st.mode === 'demo') { txt = 'Mode demo'; }
@@ -861,9 +869,39 @@ function closeSheet(result, dariBack) {
   if (c && c.resolve) c.resolve(result);
 }
 
+// Tombol Kembali di layar utama: sekali = pesan, dua kali dalam 2 detik = keluar. Di bawah entri riwayat
+// "penjaga" ditaruh satu lapis; setiap Kembali menghabiskan lapisnya, lalu lapis baru dipasang lagi.
+let keluarSiap = false, keluarTimer = null, penjagaAda = false;
+
+function pasangPenjaga() {
+  try { history.pushState({ kemanaJaga: 1 }, ''); penjagaAda = true; } catch (e) { penjagaAda = false; }
+}
+
+function mulaiPenjagaKembali() {
+  try { history.replaceState({ kemanaAwal: 1 }, ''); } catch (e) { return; }
+  pasangPenjaga();
+}
+
+function kembaliDiLayarUtama() {
+  if (keluarSiap) {
+    // Kembali kedua: lepaskan, biarkan browser keluar dari aplikasi (atau ke halaman sebelumnya).
+    clearTimeout(keluarTimer); keluarSiap = false; penjagaAda = false;
+    try { history.back(); } catch (e) { /* abaikan */ }
+    return;
+  }
+  pasangPenjaga();
+  if (!penjagaAda) return;
+  if (!$('shell').hidden && st.tab !== 'catat') { switchTab('catat'); return; }   // dari tab lain: pulang ke Catat dulu
+  keluarSiap = true;
+  clearTimeout(keluarTimer);
+  keluarTimer = setTimeout(function () { keluarSiap = false; }, 2000);
+  toast('Tekan Kembali sekali lagi untuk keluar', null, null, 2000);
+}
+
 window.addEventListener('popstate', function () {
   if (skipPop) { skipPop = false; return; }
-  if (sheetEntry) { sheetEntry = false; if (!$('overlay').hidden) closeSheet(false, true); }
+  if (sheetEntry) { sheetEntry = false; if (!$('overlay').hidden) closeSheet(false, true); return; }
+  kembaliDiLayarUtama();
 });
 
 /** Tab / Shift+Tab berputar di dalam lembar (papan ketik, pembaca layar), tidak lari ke halaman di belakangnya. */
@@ -1105,6 +1143,32 @@ function setupSimpan() {
 }
 
 // ---------------------------------------------------------------------------
+// Kabar & pembaruan (tombol lonceng)
+
+function openKabar() {
+  const dilihat = prefs.kabarDilihat || CONFIG.APP_VERSION;
+  const baru = {};
+  K.kabarBaru(dilihat).forEach(function (k) { baru[k.versi] = true; });
+  let h = '<h2>Kabar Kemana</h2>';
+  if (swMenunggu) {
+    h += '<div class="kabar-baru"><p><b>Versi baru sudah siap.</b> Ketuk tombol di bawah untuk memakainya. Halaman dimuat ulang sebentar.</p>' +
+      '<button type="button" class="btn primary block" data-act="pakai-update">Pakai sekarang</button></div>';
+  } else {
+    h += '<p>Kamu sudah memakai versi terbaru (' + esc(CONFIG.APP_VERSION) + ').</p>';
+  }
+  h += K.KABAR.map(function (k) {
+    return '<div class="kabar-item"><h3>' + esc(k.judul) + (baru[k.versi] ? '<span class="tag-baru">Baru</span>' : '') + '</h3>' +
+      '<small>Versi ' + esc(k.versi) + ' · ' + esc(k.tanggal) + '</small>' +
+      '<ul>' + k.butir.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul></div>';
+  }).join('');
+  h += '<div class="actions"><button type="button" class="btn" data-act="tutup">Tutup</button></div>';
+  openSheet(h, { focus: false });
+  prefs.kabarDilihat = K.KABAR[0].versi;
+  savePrefs();
+  renderBell();
+}
+
+// ---------------------------------------------------------------------------
 // Baca nota (OCR di perangkat)
 
 async function prosesNota(file) {
@@ -1132,6 +1196,13 @@ async function prosesNota(file) {
     closeSheet('selesai');
     toast('Gagal membaca nota: ' + (e.message || e));
   }
+}
+
+function bukaPemilihNota(id) {
+  const inp = $(id);
+  inp.value = '';
+  closeSheet(false);
+  inp.click();   // masih di dalam ketukan pengguna, jadi diizinkan browser
 }
 
 function terapkanNota(r, res) {
@@ -1362,10 +1433,17 @@ const ACT = {
   cepat: function (el) { simpanCepat(Number(el.getAttribute('data-i'))); },
   nota: function () {
     if (!window.Worker || typeof WebAssembly !== 'object') { toast('Browser ini belum bisa membaca nota. Coba Chrome, Edge, atau Safari terbaru.'); return; }
-    const inp = $('notaFile');
-    inp.value = '';
-    inp.click();
+    // iPhone sudah menawarkan "Ambil Foto" dan "Pustaka Foto" sendiri. Android langsung membuka galeri,
+    // jadi di sana pilihannya ditampilkan dulu.
+    if (isIOS()) { $('notaFile').value = ''; $('notaFile').click(); return; }
+    openSheet('<div class="pilih-nota"><h2>Isi dari nota</h2><p>Foto dibaca di HP-mu, tidak dikirim ke mana pun.</p>' +
+      '<button type="button" class="btn primary block big" data-act="nota-foto">Ambil foto nota</button>' +
+      '<button type="button" class="btn block big" data-act="nota-galeri">Pilih dari galeri</button></div>' +
+      '<div class="actions"><button type="button" class="btn" data-act="tutup">Batal</button></div>', { focus: false });
   },
+  'nota-foto': function () { bukaPemilihNota('notaFoto'); },
+  'nota-galeri': function () { bukaPemilihNota('notaFile'); },
+  kabar: openKabar,
   'nota-pilih': function (el) { st.form.nominal = el.getAttribute('data-v'); renderAmount(); },
   'nota-batal': function () { closeSheet(false); },
   status: function () {
@@ -1509,7 +1587,9 @@ $('keypad').addEventListener(ADA_POINTER ? 'pointerdown' : 'touchstart', functio
   $('keypad').addEventListener(t, function () { clearTimeout(holdTimer); }, { passive: true });
 });
 
-$('notaFile').addEventListener('change', function () { const f = this.files && this.files[0]; if (f) prosesNota(f); });
+['notaFile', 'notaFoto'].forEach(function (id) {
+  $(id).addEventListener('change', function () { const f = this.files && this.files[0]; if (f) prosesNota(f); });
+});
 
 document.addEventListener('input', function (ev) {
   if (ev.target && ev.target.id === 'fAsli') infoSelisih();
@@ -1574,6 +1654,8 @@ window.addEventListener('beforeinstallprompt', function (ev) { ev.preventDefault
 function boot() {
   applyTheme();
   if (prefs.versi && prefs.versi !== CONFIG.APP_VERSION) setTimeout(function () { toast('Aplikasi diperbarui ke versi ' + CONFIG.APP_VERSION + '.'); }, 800);
+  // Pengguna baru tidak perlu diberi titik "ada kabar" untuk riwayat sebelum dia memakai aplikasi.
+  if (!prefs.kabarDilihat) { prefs.kabarDilihat = prefs.versi || CONFIG.APP_VERSION; savePrefs(); }
   if (prefs.versi !== CONFIG.APP_VERSION) { prefs.versi = CONFIG.APP_VERSION; savePrefs(); }
 
   let wantDemo = false;
@@ -1615,8 +1697,9 @@ function daftarkanSW() {
   navigator.serviceWorker.addEventListener('controllerchange', function () { if (swDiminta) location.reload(); });
   function tawarkan(w) {
     swMenunggu = w;
-    // Tawaran juga tersedia terus di Pengaturan, karena toast tergantikan pesan lain.
-    toast('Versi baru Kemana sudah siap.', 'Pakai sekarang', pakaiVersiBaru, 0);
+    // Tawarannya menetap di lonceng dan di Pengaturan; pesan ini hanya mengabarkan sebentar.
+    toast('Versi baru Kemana sudah siap.', 'Lihat', openKabar, 7000);
+    renderBell();
     if (st.tab === 'pengaturan' && !$('shell').hidden) renderPengaturan();
   }
   window.addEventListener('load', function () {
@@ -1631,4 +1714,5 @@ function daftarkanSW() {
   });
 }
 
+mulaiPenjagaKembali();
 boot();
