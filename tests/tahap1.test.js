@@ -86,3 +86,27 @@ test('nota: total, tanggal, toko, kategori dari contoh', () => {
   assert.equal(tf.catatan, 'Transfer ke Budi Santoso, bayar project web');
   assert.ok(tf.transfer);
 });
+
+test('data contoh selalu mengisi bulan ini dan bulan lalu, di tanggal berapa pun (bug: awal bulan kosong)', () => {
+  const F = { add: (iso, n) => new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10) + n)).toISOString().slice(0, 10) };
+  const ymMin = (iso) => { const d = new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 2, 1)); return d.toISOString().slice(0, 7); };
+  let hari = '2026-01-01';
+  for (let i = 0; i < 800; i++, hari = F.add(hari, 1)) {   // lebih dari dua tahun, termasuk tahun kabisat dan pergantian tahun
+    const ym = hari.slice(0, 7), ymLalu = ymMin(hari);
+    const list = S.contohTransaksi(hari, hari + ' 10:00:00');
+    assert.equal(list.length, 17, hari);
+    const ini = C.ringkasanBulan(list, ym), lalu = C.ringkasanBulan(list, ymLalu);
+    assert.ok(ini.masuk > 0, hari + ': pemasukan bulan ini kosong');
+    assert.ok(ini.keluar > 0 && ini.perKategori.length >= 4, hari + ': pengeluaran bulan ini terlalu sedikit');
+    assert.ok(lalu.masuk > 0 && lalu.keluar > 0, hari + ': bulan lalu kosong');
+    assert.ok(list.every((t) => t.tanggal <= hari), hari + ': ada transaksi contoh di masa depan');
+    assert.equal(new Set(list.map((t) => t.id)).size, list.length, hari + ': id ganda');
+  }
+});
+
+test('data contoh pada hari biasa tidak berubah dari sebelumnya', () => {
+  const list = S.contohTransaksi('2026-10-31', '2026-10-31 10:00:00');
+  assert.equal(list.find((t) => t.id === 'contoh-09').tanggal, '2026-10-24');   // gaji, 7 hari lalu
+  assert.equal(list.find((t) => t.id === 'contoh-11').tanggal, '2026-09-28');   // gaji bulan lalu, 33 hari lalu
+  assert.equal(list.find((t) => t.id === 'contoh-01').tanggal, '2026-10-31');
+});

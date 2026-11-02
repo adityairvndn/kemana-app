@@ -148,16 +148,23 @@ npm test           # tes logika inti (Node 18+)
 
 ## Merilis versi baru
 
-Aplikasi selalu mengambil file terbaru dari server setiap dibuka saat online. Jadi cukup push ke GitHub, dan pengguna otomatis mendapat versi baru tanpa perlu memasang ulang. Data mereka ada di spreadsheet, jadi tidak ikut hilang.
+Aplikasi tersimpan di HP sebagai satu paket berversi, jadi terbuka instan dan tetap jalan tanpa sinyal. Versi baru diunduh di latar belakang. Pengguna melihat pesan **Versi baru Kemana sudah siap** dan mengetuk **Pakai sekarang**. Kalau diabaikan, versi baru dipakai otomatis saat aplikasi dibuka lagi setelah ditutup. Data pengguna ada di spreadsheet, jadi tidak ikut hilang.
 
-**Kalau versi baru butuh kolom atau sheet baru:**
+**Setiap rilis, naikkan nomor versi di tiga tempat dengan angka yang sama:**
+
+1. `APP_VERSION` di `js/config.js`
+2. `VERSION` di `sw.js`
+3. `version` di `package.json`
+
+Kalau `VERSION` di `sw.js` lupa dinaikkan, HP yang sudah memasang aplikasi **tidak akan menerima pembaruan**. Karena itu `npm test` memeriksa ketiganya sama, dan juga memeriksa bahwa semua file aplikasi masuk daftar `SHELL` di `sw.js`. File baru yang tidak masuk daftar itu tidak akan tersedia saat offline.
+
+**Kalau versi baru butuh kolom atau sheet baru**, lakukan juga ini sebelum push:
 
 1. Di `js/schema.js`:
    - naikkan `SCHEMA_VERSION`, misalnya dari 1 ke 2;
    - tambahkan kolomnya di `SHEETS` dengan `since: 2`;
    - tambahkan `def` kalau baris lama perlu nilai bawaan.
-2. Di `js/config.js`, naikkan `APP_VERSION`. Di `sw.js`, ganti nama `CACHE`, misalnya `kemana-v2`.
-3. Push.
+2. Push.
 
 Saat pengguna membuka aplikasi, kolom baru ditambahkan di ujung kanan sheet. Pengguna lalu melihat pesan **Spreadsheet diperbarui** berisi daftar perubahannya.
 
@@ -180,6 +187,7 @@ Saat pengguna membuka aplikasi, kolom baru ditambahkan di ujung kanan sheet. Pen
 | File | Isi |
 | --- | --- |
 | `index.html`, `css/app.css` | Tampilan |
+| `fonts/` | Font Plus Jakarta Sans (subset Latin, 24 KB) yang ikut di dalam aplikasi, jadi tidak ada permintaan ke Google Fonts. Berlisensi SIL OFL 1.1 |
 | `js/app.js` | Alur aplikasi dan layar |
 | `js/schema.js` | Pakem spreadsheet: sheet, kolom, versi dan migrasi |
 | `js/sheets.js` | Baca dan tulis Google Sheets |
@@ -191,12 +199,15 @@ Saat pengguna membuka aplikasi, kolom baru ditambahkan di ujung kanan sheet. Pen
 | `vendor/tesseract/` | Mesin OCR (tesseract.js-core 7.0.0) dan model bahasa Indonesia (tessdata_fast), keduanya berlisensi Apache 2.0 |
 | `js/config.js` | **Pengaturan yang kamu isi** |
 | `sw.js`, `manifest.webmanifest` | Supaya bisa dipasang dan dibuka offline |
+| `js/boot.js`, `js/nomodule.js` | Memasang tema sebelum tampil (mencegah kedip warna), dan pesan untuk browser yang terlalu lama |
 | `icons/` | Ikon aplikasi: `icon.svg` (sumber dan favicon), PNG 192/512, `maskable` untuk Android, 180 untuk iPhone |
-| `tests/` | Tes logika inti |
+| `tests/` | Tes logika inti dan pemeriksaan rilis (`npm test`) |
 
 ## Lisensi
 
 [MIT](LICENSE): bebas dipakai, diubah dan dibagikan.
+
+Font di `fonts/` adalah [Plus Jakarta Sans](https://github.com/tokotype/PlusJakartaSans) dengan lisensi SIL Open Font License 1.1 (`fonts/OFL.txt`).
 
 File di `vendor/tesseract/` berasal dari [tesseract.js-core](https://github.com/naptha/tesseract.js-core) dan [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast), berlisensi Apache 2.0 (salinan lisensinya ada di folder yang sama).
 

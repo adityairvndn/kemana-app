@@ -1,6 +1,16 @@
 /* Kemana — gaya tampilan.
    Tema diatur lewat atribut data-theme di <html>; ukuran teks lewat data-teks. */
 
+/* Font ikut di dalam aplikasi (bukan dari Google Fonts): tampil lebih cepat, jalan offline, dan tidak ada
+   permintaan ke pihak ketiga. Lisensi: fonts/OFL.txt. Kalau gagal dimuat, dipakai font bawaan HP. */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('../fonts/PlusJakartaSans-latin.woff2') format('woff2');
+}
+
 :root,
 [data-theme="terang"] {
   --bg: #F3F5F9;
@@ -108,6 +118,8 @@
 html { font-size: 16px; }
 html[data-teks="besar"] { font-size: 18px; }
 html[data-teks="sangat"] { font-size: 20px; }
+/* Saat lembar terbuka, halaman di belakangnya tidak ikut bergulir. */
+html.sheet-open, html.sheet-open body { overflow: hidden; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { background: var(--bg); color: var(--ink); }
@@ -120,9 +132,16 @@ body {
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 button, input, select, textarea { font: inherit; color: inherit; }
-button { cursor: pointer; background: none; border: 0; }
+button { cursor: pointer; background: none; border: 0; -webkit-appearance: none; appearance: none; }
+/* Tanpa jeda 300 ms dan tanpa zoom ganda saat mengetuk cepat (HP lama). */
+button, a, label, input, select, textarea { touch-action: manipulation; }
+/* iOS menambahkan bayangan dalam pada kolom isian teks. */
+input[type="text"], input[type="search"] { -webkit-appearance: none; appearance: none; }
+input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; }
 a { color: var(--primary); }
 :focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 [hidden] { display: none !important; }
@@ -135,6 +154,7 @@ a { color: var(--primary); }
 .topbar {
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; min-height: 3.5rem;
+  padding: 0 1rem;
   padding: env(safe-area-inset-top) max(1rem, calc((100% - 34rem) / 2 + 1rem)) 0;
   background: var(--bg); border-bottom: var(--border-w) solid transparent;
 }
@@ -142,11 +162,12 @@ a { color: var(--primary); }
 .topbar h1 { flex: 1; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; }
 .main {
   max-width: 34rem; margin: 0 auto;
+  padding: .25rem 1rem 6rem;
   padding: .25rem 1rem calc(6rem + env(safe-area-inset-bottom));
 }
 
 .status {
-  display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 .8rem;
+  display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0 .9rem;
   border-radius: 999px; font-size: .85rem; font-weight: 700;
   background: var(--surface); border: var(--border-w) solid var(--line); color: var(--muted);
 }
@@ -160,13 +181,15 @@ a { color: var(--primary); }
 .nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
   display: flex; justify-content: center;
+  padding-bottom: 0;
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--surface); border-top: var(--border-w) solid var(--line);
 }
 .nav button {
   flex: 1; max-width: 8.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-height: 3.9rem; padding: .35rem 0; font-size: min(.78rem, 3.4vw); font-weight: 600; color: var(--muted);
+  min-height: 3.9rem; padding: .35rem 0; font-size: .78rem; font-weight: 600; color: var(--muted);
 }
+@supports (font-size: min(1px, 2vw)) { .nav button { font-size: min(.78rem, 3.4vw); } }
 .nav button svg { margin-bottom: .15rem; }
 .nav button[aria-current="page"] { color: var(--primary); }
 .nav button[aria-current="page"] span { font-weight: 800; }
@@ -216,7 +239,7 @@ a { color: var(--primary); }
 .chip.ghost { border-style: dashed; color: var(--muted); }
 
 .seg { display: flex; padding: .25rem; border-radius: 1rem; background: var(--surface); border: var(--border-w) solid var(--line); }
-.seg button { flex: 1; min-width: 0; min-height: 2.85rem; padding: 0 .2rem; border-radius: .8rem; font-weight: 700; font-size: min(.95rem, 4.2vw); color: var(--muted); }
+.seg button { flex: 1; min-width: 0; min-height: 2.85rem; padding: 0 .2rem; border-radius: .8rem; font-weight: 700; font-size: .95rem; font-size: min(.95rem, 4.2vw); color: var(--muted); }
 .seg button[aria-pressed="true"] { color: var(--on-primary); background: var(--tone, var(--primary)); }
 
 .label { font-size: .85rem; font-weight: 700; color: var(--muted); margin-bottom: .3rem; }
@@ -245,7 +268,7 @@ a { color: var(--primary); }
 .date-chip.past svg { color: var(--warn); }
 .date-chip input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; border: 0; }
 .row2 .input { flex: 1; min-width: 0; }
-.keypad { display: flex; flex-wrap: wrap; margin: .5rem -.25rem 0; user-select: none; -webkit-user-select: none; }
+.keypad { display: flex; flex-wrap: wrap; margin: .5rem -.25rem 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .keypad button {
   width: calc(33.333% - .5rem); margin: 0 .25rem .5rem; min-height: 3.2rem; border-radius: .9rem;
   background: var(--surface); border: var(--border-w) solid var(--line);
@@ -254,7 +277,8 @@ a { color: var(--primary); }
 .keypad button:active { background: var(--surface-2); }
 .keypad .k000 { font-size: 1.2rem; }
 .form-actions {
-  position: sticky; z-index: 5; bottom: calc(3.9rem + env(safe-area-inset-bottom));
+  position: sticky; z-index: 5; bottom: 3.9rem;
+  bottom: calc(3.9rem + env(safe-area-inset-bottom));
   display: flex; margin: 1rem -1rem 0; padding: .6rem 1rem; background: var(--bg);
   border-top: var(--border-w) solid var(--line);
 }
@@ -379,6 +403,7 @@ button.list-item:active { background: var(--surface-2); }
 .screen {
   min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center;
   padding: 1.5rem 1.25rem; padding-top: calc(env(safe-area-inset-top) + 1.5rem);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem);
 }
 .screen-in { width: 100%; max-width: 26rem; }
 .logo { width: 4.5rem; height: 4.5rem; border-radius: 1.2rem; display: block; margin-bottom: 1.25rem; }
@@ -400,11 +425,16 @@ button.list-item:active { background: var(--surface-2); }
   background: rgba(10, 14, 24, .5); display: flex; align-items: flex-end; justify-content: center;
 }
 .sheet {
-  width: 100%; max-width: 34rem; max-height: 92vh; overflow-y: auto;
+  width: 100%; max-width: 34rem; max-height: 92vh; max-height: 92dvh; overflow-y: auto;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
   background: var(--surface); border-radius: 1.25rem 1.25rem 0 0; border: var(--border-w) solid var(--line);
+  padding: 1.25rem 1.1rem 1.25rem;
   padding: 1.25rem 1.1rem calc(1.25rem + env(safe-area-inset-bottom));
   animation: up .2s ease-out;
 }
+.sheet:focus { outline: none; }
+.sheet.nudge { animation: nudge .3s; }
+@keyframes nudge { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 @media (min-width: 40rem) {
   .overlay { align-items: center; }
   .sheet { border-radius: 1.25rem; }
@@ -422,27 +452,53 @@ button.list-item:active { background: var(--surface-2); }
 .sheet .hint { font-size: .85rem; color: var(--muted); margin-top: .35rem; }
 .sheet .warn-line { font-size: .9rem; color: var(--warn); margin-top: .75rem; }
 
+/* Toast: saat tidak tampil, benar-benar disembunyikan (visibility + opacity), bukan hanya digeser.
+   Menggeser dengan translateY saja meninggalkan sebagian toast terlihat di layar yang tinggi. */
 .toast {
   position: fixed; left: 1rem; right: 1rem; z-index: 50; margin: 0 auto; max-width: 30rem;
-  bottom: calc(9.2rem + env(safe-area-inset-bottom));
+  bottom: 1.25rem;
+  bottom: calc(1.25rem + env(safe-area-inset-bottom));
   display: flex; align-items: center; padding: .8rem .8rem .8rem 1rem; border-radius: .9rem;
   background: var(--ink); color: var(--bg); font-weight: 600; font-size: .95rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
-  transform: translateY(12rem); transition: transform .2s ease;
+  visibility: hidden; opacity: 0; pointer-events: none; transform: translateY(1rem);
+  transition: opacity .2s ease, transform .2s ease, visibility 0s linear .2s;
 }
-.toast.show { transform: none; }
-.toast span { flex: 1; }
+.toast.show { visibility: visible; opacity: 1; pointer-events: auto; transform: none; transition-delay: 0s; }
+.toast span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .toast button { flex: none; min-height: 2.5rem; padding: 0 .8rem; margin-left: .5rem; border-radius: .6rem; font-weight: 800; color: inherit; text-decoration: underline; }
+/* Di atas menu bawah (dan di atas tombol Simpan pada layar Catat). */
+body[data-view="app"] .toast { bottom: 5.1rem; bottom: calc(5.1rem + env(safe-area-inset-bottom)); }
+body[data-view="app"][data-tab="catat"] .toast { bottom: 9.7rem; bottom: calc(9.7rem + env(safe-area-inset-bottom)); }
+/* Saat lembar terbuka, toast pindah ke atas supaya tidak menutupi isian dan tombolnya. */
+html.sheet-open .toast, html.sheet-open body[data-view="app"] .toast, html.sheet-open body[data-view="app"][data-tab="catat"] .toast {
+  bottom: auto; top: .75rem; top: calc(.75rem + env(safe-area-inset-top)); transform: none;
+}
 
+/* Layar pendek (HP diputar mendatar): bilah bawah dibuat ringkas dan tidak menempel,
+   supaya ada ruang untuk tombol angka. */
+@media (max-height: 30rem) {
+  .nav button { min-height: 3rem; flex-direction: row; justify-content: center; padding: .25rem 0; }
+  .nav button svg { margin: 0 .4rem 0 0; width: 20px; height: 20px; }
+  .form-actions { position: static; margin-bottom: 0; }
+  .keypad button { min-height: 2.8rem; }
+  .main { padding-bottom: 4rem; padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
+  body[data-view="app"] .toast, body[data-view="app"][data-tab="catat"] .toast { bottom: 3.8rem; bottom: calc(3.8rem + env(safe-area-inset-bottom)); }
+}
+
+/* Kurangi gerak: tanpa animasi berarti, tapi indikator "memuat" tetap berputar pelan
+   supaya tidak terlihat macet. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
+  .spinner, .status.spin svg { animation: spin 1.8s linear infinite !important; }
 }
 
 /* ---------- tahap 1: nota, catat cepat, cocokkan saldo ---------- */
-.amount-row { display: flex; align-items: center; gap: .6rem; }
-.amount-row .amount { flex: 1 1 auto; min-width: 0; }
+.amount-row { display: flex; align-items: center; }
+.amount-row .amount { flex: 1 1 auto; min-width: 0; margin-right: .6rem; }
+.nota-btn svg { margin-bottom: .1rem; }
 .nota-btn {
-  flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem;
+  flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center;
   min-width: 3.7rem; min-height: 3.5rem; padding: .4rem .55rem; border-radius: 1rem;
   border: var(--border-w) solid var(--line); background: var(--surface); color: var(--ink);
   font-size: .75rem; font-weight: 700; box-shadow: var(--shadow);
@@ -452,10 +508,12 @@ button.list-item:active { background: var(--surface-2); }
 @keyframes pop { 40% { transform: scale(1.06); } }
 .quick { margin: .15rem 0 .75rem; }
 .quick .label small { font-weight: 500; margin-left: .3rem; }
-.quick-row { display: flex; gap: .5rem; overflow-x: auto; margin: 0 -1rem; padding: .1rem 1rem .3rem; scrollbar-width: none; }
+.quick-row { display: flex; overflow-x: auto; margin: 0 -1rem; padding: .1rem 1rem .3rem; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .quick-row::-webkit-scrollbar { display: none; }
+.quick-row .qchip + .qchip { margin-left: .5rem; }
+.qchip small { margin-top: .05rem; }
 .qchip {
-  flex: none; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: .05rem;
+  flex: none; display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
   min-height: 2.9rem; max-width: 13rem; padding: .45rem .8rem; border-radius: .9rem; text-align: left;
   border: var(--border-w) solid var(--line); background: var(--surface); color: var(--ink); box-shadow: var(--shadow);
 }
