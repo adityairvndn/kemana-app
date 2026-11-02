@@ -363,10 +363,11 @@ function renderAll() {
   else renderPengaturan();
 }
 
-function switchTab(t) {
+function switchTab(t, dariKembali) {
   st.tab = t;
   window.scrollTo(0, 0);
   renderAll();
+  if (!dariKembali) aturLapisTab();
 }
 
 function showApp() {
@@ -819,7 +820,7 @@ function isIOS() {
 let sheetCtx = null;
 let sheetOpener = null;     // elemen yang punya fokus sebelum lembar dibuka, untuk dikembalikan saat ditutup
 let sheetEntry = false;     // ada entri riwayat browser untuk lembar yang terbuka (supaya tombol Back menutup lembar)
-let sheetBackTimer = null, skipPop = false;
+let sheetBackTimer = null, skipPop = 0;   // jumlah history.back() dari kode yang popstate-nya harus diabaikan
 
 function focusEl(el) {
   try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (e2) { /* abaikan */ } }
@@ -849,7 +850,19 @@ function openSheet(html, ctx) {
   if (first && ctx && ctx.focus !== false) focusEl(first); else focusEl(box);
 }
 
-function closeSheet(result, dariBack) {
+/** history.back() dari kode, tanpa dianggap tombol Kembali. */
+function mundurDiam() {
+  skipPop++;
+  try { history.back(); } catch (e) { skipPop--; }
+}
+
+/** Entri lembar yang tertinggal tanpa lembar (mis. pemilih foto dibatalkan): lepaskan. */
+function lepasEntriYatim() {
+  if (sheetEntry && $('overlay').hidden) { sheetEntry = false; mundurDiam(); }
+}
+
+/** pertahankanEntri: lembar ditutup tapi entri riwayatnya dipakai lembar berikutnya (pemilih nota → proses nota). */
+function closeSheet(result, dariBack, pertahankanEntri) {
   const wasOpen = !$('overlay').hidden;
   $('overlay').hidden = true;
   $('sheetBox').innerHTML = '';
@@ -857,11 +870,11 @@ function closeSheet(result, dariBack) {
   const c = sheetCtx;
   sheetCtx = null;
   if (dariBack) sheetEntry = false;
-  else if (sheetEntry) {
+  else if (sheetEntry && !pertahankanEntri) {
     // Entri riwayat dilepas setelah jeda singkat; kalau lembar lain langsung dibuka, entrinya dipakai ulang.
     clearTimeout(sheetBackTimer);
     sheetBackTimer = setTimeout(function () {
-      if (sheetEntry && $('overlay').hidden) { sheetEntry = false; skipPop = true; try { history.back(); } catch (e) { skipPop = false; } }
+      if (sheetEntry && $('overlay').hidden) { sheetEntry = false; mundurDiam(); }
     }, 0);
   }
   if (wasOpen && sheetOpener && document.body.contains(sheetOpener) && !sheetOpener.disabled) focusEl(sheetOpener);
@@ -869,39 +882,52 @@ function closeSheet(result, dariBack) {
   if (c && c.resolve) c.resolve(result);
 }
 
-// Tombol Kembali di layar utama: sekali = pesan, dua kali dalam 2 detik = keluar. Di bawah entri riwayat
-// "penjaga" ditaruh satu lapis; setiap Kembali menghabiskan lapisnya, lalu lapis baru dipasang lagi.
-let keluarSiap = false, keluarTimer = null, penjagaAda = false;
+// Tombol Kembali di HP.
+// Riwayat browser disusun berlapis: [awal] → penjaga → (lapis tab) → (lembar).
+//   Kembali dari lembar         → lembar tertutup
+//   Kembali dari tab lain       → pulang ke Catat
+//   Kembali di Catat (ke awal)  → pesan "Tekan Kembali sekali lagi untuk keluar"
+//   Kembali sekali lagi         → keluar (browser meninggalkan halaman dengan sendirinya)
+// Lapis HANYA dipasang saat pengguna mengetuk/mengetik. Chrome melompati seluruh riwayat halaman yang
+// menambah entri setelah tombol Kembali tanpa ketukan baru (perlindungan "jebakan tombol Kembali"),
+// jadi memasang lapis di dalam popstate membuat Kembali berikutnya langsung keluar.
 
-function pasangPenjaga() {
-  try { history.pushState({ kemanaJaga: 1 }, ''); penjagaAda = true; } catch (e) { penjagaAda = false; }
+function pastikanPenjaga() {
+  const s = history.state;
+  if (s && (s.kemanaJaga || s.kemanaTab || s.kemanaLembar)) return;
+  try { history.pushState({ kemanaJaga: 1 }, ''); } catch (e) { /* abaikan */ }
+}
+
+/** Tab selain Catat (atau sedang mengubah transaksi) punya satu lapis riwayat sendiri. */
+function aturLapisTab() {
+  const s = history.state || {};
+  const perlu = st.tab !== 'catat' || !!st.edit;
+  if (perlu && s.kemanaJaga) { try { history.pushState({ kemanaTab: 1 }, ''); } catch (e) { /* abaikan */ } }
+  else if (!perlu && s.kemanaTab) mundurDiam();
 }
 
 function mulaiPenjagaKembali() {
-  try { history.replaceState({ kemanaAwal: 1 }, ''); } catch (e) { return; }
-  pasangPenjaga();
-}
-
-function kembaliDiLayarUtama() {
-  if (keluarSiap) {
-    // Kembali kedua: lepaskan, biarkan browser keluar dari aplikasi (atau ke halaman sebelumnya).
-    clearTimeout(keluarTimer); keluarSiap = false; penjagaAda = false;
-    try { history.back(); } catch (e) { /* abaikan */ }
-    return;
-  }
-  pasangPenjaga();
-  if (!penjagaAda) return;
-  if (!$('shell').hidden && st.tab !== 'catat') { switchTab('catat'); return; }   // dari tab lain: pulang ke Catat dulu
-  keluarSiap = true;
-  clearTimeout(keluarTimer);
-  keluarTimer = setTimeout(function () { keluarSiap = false; }, 2000);
-  toast('Tekan Kembali sekali lagi untuk keluar', null, null, 2000);
+  try { history.replaceState({ kemanaAwal: 1 }, ''); } catch (e) { /* abaikan */ }
+  // Fase tangkap: lapis penjaga sudah terpasang sebelum aksi ketukan itu sendiri (buka lembar, pindah tab).
+  document.addEventListener('click', pastikanPenjaga, true);
+  document.addEventListener('keydown', pastikanPenjaga, true);
 }
 
 window.addEventListener('popstate', function () {
-  if (skipPop) { skipPop = false; return; }
+  if (skipPop > 0) { skipPop--; return; }
   if (sheetEntry) { sheetEntry = false; if (!$('overlay').hidden) closeSheet(false, true); return; }
-  kembaliDiLayarUtama();
+  const s = history.state || {};
+  if (s.kemanaTab || s.kemanaLembar) return;
+  const diAplikasi = !$('shell').hidden;
+  if (s.kemanaJaga) {
+    // Turun dari lapis tab.
+    if (diAplikasi && st.edit) { st.edit = null; st.form = blankForm(); switchTab('riwayat', true); }
+    else if (diAplikasi && st.tab !== 'catat') switchTab('catat', true);
+    return;
+  }
+  // Sampai di dasar: penjaga sudah terpakai. Kembali berikutnya keluar; ketukan apa pun memasangnya lagi.
+  if (diAplikasi && (st.edit || st.tab !== 'catat')) { st.edit = null; st.form = blankForm(); switchTab('catat', true); }
+  toast('Tekan Kembali sekali lagi untuk keluar', null, null, 3000);
 });
 
 /** Tab / Shift+Tab berputar di dalam lembar (papan ketik, pembaca layar), tidak lari ke halaman di belakangnya. */
@@ -1172,9 +1198,9 @@ function openKabar() {
 // Baca nota (OCR di perangkat)
 
 async function prosesNota(file) {
-  if (file.type && !/^image\//.test(file.type)) { toast('Pilih gambar: foto nota atau screenshot.'); return; }
+  if (file.type && !/^image\//.test(file.type)) { lepasEntriYatim(); toast('Pilih gambar: foto nota atau screenshot.'); return; }
   let ocr;
-  try { ocr = await import('./ocr.js'); } catch (e) { toast('Pembaca nota belum tersedia. Periksa koneksi lalu coba lagi.'); return; }
+  try { ocr = await import('./ocr.js'); } catch (e) { lepasEntriYatim(); toast('Pembaca nota belum tersedia. Periksa koneksi lalu coba lagi.'); return; }
   let dibatalkan = false;
   openSheet('<div class="ocr-box"><div class="spinner" role="progressbar" aria-label="Memproses"></div>' +
     '<h2 id="ocrJudul">Menyiapkan…</h2><p id="ocrTeks">Foto diproses di HP-mu, tidak dikirim ke mana pun.</p></div>' +
@@ -1198,10 +1224,15 @@ async function prosesNota(file) {
   }
 }
 
+let notaMenunggu = false;
+
 function bukaPemilihNota(id) {
   const inp = $(id);
   inp.value = '';
-  closeSheet(false);
+  // Entri riwayat lembar dipertahankan untuk lembar "Membaca nota…": entri baru yang dibuat tanpa ketukan
+  // (setelah pemilih foto) akan dilompati Chrome, sehingga Kembali saat membaca nota menutup aplikasi.
+  closeSheet(false, false, true);
+  notaMenunggu = true;
   inp.click();   // masih di dalam ketukan pengguna, jadi diizinkan browser
 }
 
@@ -1587,8 +1618,19 @@ $('keypad').addEventListener(ADA_POINTER ? 'pointerdown' : 'touchstart', functio
   $('keypad').addEventListener(t, function () { clearTimeout(holdTimer); }, { passive: true });
 });
 
+function notaSelesaiDipilih(f) {
+  if (!notaMenunggu) { if (f) prosesNota(f); return; }
+  notaMenunggu = false;
+  if (f) prosesNota(f); else lepasEntriYatim();
+}
 ['notaFile', 'notaFoto'].forEach(function (id) {
-  $(id).addEventListener('change', function () { const f = this.files && this.files[0]; if (f) prosesNota(f); });
+  $(id).addEventListener('change', function () { notaSelesaiDipilih(this.files && this.files[0]); });
+  $(id).addEventListener('cancel', function () { notaSelesaiDipilih(null); });
+});
+// Browser lama tanpa event "cancel": pemilih ditutup → jendela kembali fokus; kalau tak ada foto, lepaskan entrinya.
+window.addEventListener('focus', function () {
+  if (!notaMenunggu) return;
+  setTimeout(function () { if (notaMenunggu && $('overlay').hidden) notaSelesaiDipilih(null); }, 1500);
 });
 
 document.addEventListener('input', function (ev) {

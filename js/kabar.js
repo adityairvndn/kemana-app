@@ -4,10 +4,17 @@
 
 export const KABAR = [
   {
+    versi: '1.3.1', tanggal: '2 Nov 2026', judul: 'Tombol Kembali lebih rapi',
+    butir: [
+      'Dari halaman Riwayat, Ringkasan, atau Pengaturan, tombol Kembali membawamu ke Catat dulu.',
+      'Di Catat, tombol Kembali selalu memberi pesan dulu sebelum aplikasi ditutup.'
+    ]
+  },
+  {
     versi: '1.3.0', tanggal: '2 Nov 2026', judul: 'Lebih enak dipakai',
     butir: [
       'Tombol Nota sekarang menawarkan dua pilihan: Ambil foto atau Pilih dari galeri.',
-      'Tombol Kembali di HP tidak lagi langsung menutup aplikasi. Tekan sekali lagi untuk keluar.',
+      'Tombol Kembali di HP tidak lagi langsung menutup aplikasi.',
       'Ada tombol lonceng ini untuk melihat kabar dan pembaruan.'
     ]
   },
