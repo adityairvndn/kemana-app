@@ -22,23 +22,28 @@ const LS = {
   del: function (k) { try { localStorage.removeItem(k); } catch (e) { /* abaikan */ } }
 };
 
+// Warna contoh = latar, permukaan, aksen dari token tema (css/app.css). Biru Laut sekarang tema gelap (navy).
 const THEMES = [
-  ['otomatis', 'Ikuti HP', ['#F3F5F9', '#0E1320', '#0F6E56']],
-  ['terang', 'Terang', ['#F3F5F9', '#FFFFFF', '#0F6E56']],
-  ['gelap', 'Gelap', ['#0E1320', '#172033', '#4FC9A0']],
-  ['biru', 'Biru Laut', ['#EAF0F9', '#FFFFFF', '#1D5BD8']],
-  ['krem', 'Krem', ['#F5EFE4', '#FFFCF6', '#8F5310']],
+  ['otomatis', 'Ikuti HP', ['#FAFAF9', '#151719', '#FF8878']],
+  ['terang', 'Terang', ['#FAFAF9', '#FFFFFF', '#FF8878']],
+  ['gelap', 'Gelap', ['#151719', '#202326', '#FF9585']],
+  ['krem', 'Krem', ['#F6F0E6', '#FFFCF6', '#FF8878']],
+  ['biru', 'Biru Laut', ['#0D1B2A', '#16283B', '#FF9585']],
+  ['sage', 'Sage', ['#F0F4EE', '#FBFCF8', '#FF8878']],
   ['kontras', 'Kontras Tinggi', ['#FFFFFF', '#000000', '#0030B8']]
 ];
-const THEME_BG = { terang: '#F3F5F9', gelap: '#0E1320', biru: '#EAF0F9', krem: '#F5EFE4', kontras: '#FFFFFF' };
+const THEME_BG = { terang: '#FAFAF9', gelap: '#151719', krem: '#F6F0E6', biru: '#0D1B2A', sage: '#F0F4EE', kontras: '#FFFFFF' };
 const TEKS = [['normal', 'Normal'], ['besar', 'Besar'], ['sangat', 'Sangat besar']];
 const TITLES = { catat: 'Catat', riwayat: 'Riwayat', ringkasan: 'Ringkasan', pengaturan: 'Pengaturan' };
 const KATA = {}; KATA[JK.KELUAR] = 'pengeluaran'; KATA[JK.MASUK] = 'pemasukan'; KATA[JK.TRANSFER] = 'transfer';
 const LIMIT = 150;
 
-const ICON_CHECK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
-const ICON_SYNC = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
-const ICON_CHEV = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+const ICON_CHECK = '<svg class="ic xs" aria-hidden="true" focusable="false"><use href="#i-centang"/></svg>';
+const ICON_SYNC = '<svg class="ic xs" aria-hidden="true" focusable="false"><use href="#i-sinkron"/></svg>';
+const ICON_CHEV = '<svg class="ic s chev" aria-hidden="true" focusable="false"><use href="#i-chevron"/></svg>';
+const ICON_PREV = '<svg class="ic km-prev" aria-hidden="true" focusable="false"><use href="#i-chevron"/></svg>';
+const ICON_NEXT = '<svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chevron"/></svg>';
+const ICON_TRANSFER = '<svg class="ic s" aria-hidden="true" focusable="false"><use href="#i-transfer"/></svg>';
 
 // ---------------------------------------------------------------------------
 // State
@@ -291,7 +296,7 @@ function applyTheme() {
   if (t === 'otomatis') t = darkMq && darkMq.matches ? 'gelap' : 'terang';
   document.documentElement.setAttribute('data-theme', t);
   document.documentElement.setAttribute('data-teks', prefs.teks);
-  $('metaTheme').setAttribute('content', THEME_BG[t] || '#F3F5F9');
+  $('metaTheme').setAttribute('content', THEME_BG[t] || '#FAFAF9');
 }
 
 let toastTimer = null, toastFn = null;
@@ -382,7 +387,10 @@ function showApp() {
 // Catat
 
 function chip(act, value, selected, label) {
-  return '<button type="button" class="chip" data-act="' + act + '" data-v="' + esc(value) + '" aria-pressed="' + (value === selected) + '">' + esc(label || value) + '</button>';
+  const on = value === selected;
+  // Terpilih ditandai centang + permukaan + garis, tidak hanya warna.
+  return '<button type="button" class="chip" data-act="' + act + '" data-v="' + esc(value) + '" aria-pressed="' + on + '">' +
+    (on ? ICON_CHECK.replace('ic xs', 'ic') : '') + esc(label || value) + '</button>';
 }
 
 function ensureFormDefaults() {
@@ -450,7 +458,7 @@ function renderQuick() {
     if (st.cepat.length) {
       h = '<div class="label">Catat cepat <small>(sekali ketuk)</small></div><div class="quick-row">' + st.cepat.map(function (c, i) {
         return '<button type="button" class="qchip" data-act="cepat" data-i="' + i + '" aria-label="Catat ' + esc(labelCepat(c)) + ' ' + F.rupiah(c.nominal) + ' dari ' + esc(c.dompet) + '">' +
-          '<b>' + esc(labelCepat(c)) + ' <span class="num">' + F.ribuan(c.nominal) + '</span></b><small>' + esc(c.jenis === JK.TRANSFER ? 'Transfer' : c.dompet) + '</small></button>';
+          '<b>' + esc(labelCepat(c)) + ' · <span class="num">' + F.rupiah(c.nominal) + '</span></b><small>' + esc(c.jenis === JK.TRANSFER ? 'Transfer' : c.dompet) + '</small></button>';
       }).join('') + '</div>';
     }
   }
@@ -473,6 +481,8 @@ function simpanCepat(i) {
   toast(labelCepat(c) + ' ' + F.rupiah(c.nominal) + ' tersimpan.', 'Batalkan', function () { commit({ t: 'del', id: item.id }); });
 }
 
+const KAT_AWAL = 6;
+
 function renderCatat() {
   ensureFormDefaults();
   const f = st.form, v = view();
@@ -491,8 +501,17 @@ function renderCatat() {
     let kats = v.kategori.filter(function (k) { return k.jenis === f.jenis && k.aktif !== false; }).map(function (k) { return k.nama; });
     kats = C.urutSering(kats, frekKategori());
     if (f.kategori && kats.indexOf(f.kategori) < 0) kats.push(f.kategori);
-    $('chipsKategori').innerHTML = kats.map(function (n) { return chip('kategori', n, f.kategori); }).join('') +
-      '<button type="button" class="chip ghost" data-act="kategori-baru" data-v="' + esc(f.jenis) + '">+ Kategori</button>';
+    // Ringkas: yang paling sering dipakai dulu; sisanya lewat "Semua kategori" (design.md §8.5).
+    let tampil = kats;
+    if (!f.katSemua && kats.length > KAT_AWAL + 1) {
+      tampil = kats.slice(0, KAT_AWAL);
+      if (f.kategori && tampil.indexOf(f.kategori) < 0) tampil[KAT_AWAL - 1] = f.kategori;   // pilihan tetap terlihat
+    }
+    const sisa = kats.length - tampil.length;
+    $('chipsKategori').innerHTML = tampil.map(function (n) { return chip('kategori', n, f.kategori); }).join('') +
+      (sisa > 0
+        ? '<button type="button" class="chip ghost" data-act="kategori-semua" aria-expanded="false">Semua kategori (' + kats.length + ')</button>'
+        : '<button type="button" class="chip ghost" data-act="kategori-baru" data-v="' + esc(f.jenis) + '">+ Kategori</button>');
   }
   const doms = activeDompet();
   if (f.dompet && doms.indexOf(f.dompet) < 0) doms.push(f.dompet);
@@ -617,14 +636,16 @@ function hapusTrx() {
 
 function trxHtml(t) {
   const sign = t.jenis === JK.MASUK ? '+' : t.jenis === JK.KELUAR ? '−' : '';
-  const ic = t.jenis === JK.MASUK ? '+' : t.jenis === JK.KELUAR ? '−' : '⇄';
-  const title = t.jenis === JK.TRANSFER ? 'Transfer' : (t.kategori || 'Tanpa kategori');
-  const sub = t.jenis === JK.TRANSFER ? t.dompet + ' → ' + t.ke_dompet : t.dompet;
+  const ic = t.jenis === JK.MASUK ? '+' : t.jenis === JK.KELUAR ? '−' : ICON_TRANSFER;
+  // Judul = catatan bila ada, kalau tidak kategori. Baris kedua = kategori · dompet (atau asal → tujuan).
+  const dasar = t.jenis === JK.TRANSFER ? 'Transfer' : (t.kategori || 'Tanpa kategori');
+  const title = t.catatan || dasar;
+  const arah = t.jenis === JK.TRANSFER ? t.dompet + ' → ' + t.ke_dompet : t.dompet;
+  const sub = (t.catatan ? dasar + ' · ' : '') + arah;
   return '<button type="button" class="trx" data-act="trx" data-id="' + esc(t.id) + '">' +
     '<span class="dot ' + t.jenis + '" aria-hidden="true">' + ic + '</span>' +
     '<span class="info"><span class="t">' + esc(title) + '</span>' +
-    '<span class="s">' + (t._pending ? '<span class="tag">belum terkirim</span>' : '') + esc(sub) + '</span>' +
-    (t.catatan ? '<span class="s">' + esc(t.catatan) + '</span>' : '') + '</span>' +
+    '<span class="s">' + (t._pending ? '<span class="tag">belum terkirim</span>' : '') + esc(sub) + '</span></span>' +
     '<span class="amt num ' + t.jenis + '">' + sign + F.rupiah(t.nominal) + '</span></button>';
 }
 
@@ -670,9 +691,9 @@ function renderRiwayatList(v) {
 
 function monthNav() {
   return '<div class="monthnav">' +
-    '<button type="button" class="icon-btn" data-act="bulan" data-d="-1" aria-label="Bulan sebelumnya"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>' +
+    '<button type="button" class="icon-btn" data-act="bulan" data-d="-1" aria-label="Bulan sebelumnya">' + ICON_PREV + '</button>' +
     '<b class="rBulan">' + esc(F.labelBulan(st.bulan)) + '</b>' +
-    '<button type="button" class="icon-btn" data-act="bulan" data-d="1" aria-label="Bulan berikutnya"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div>';
+    '<button type="button" class="icon-btn" data-act="bulan" data-d="1" aria-label="Bulan berikutnya">' + ICON_NEXT + '</button></div>';
 }
 
 function renderRingkasan() {
@@ -784,7 +805,8 @@ function renderPengaturan() {
 
   h += '<h2 class="section-title">Tampilan</h2><div class="themes">' + THEMES.map(function (t) {
     return '<button type="button" class="theme-opt" data-act="tema" data-v="' + t[0] + '" aria-pressed="' + (prefs.tema === t[0]) + '">' +
-      '<span class="swatch">' + t[2].map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</span>' + t[1] + '</button>';
+      '<span class="swatch">' + t[2].map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</span>' +
+      (prefs.tema === t[0] ? ICON_CHECK.replace('ic xs', 'ic') : '') + t[1] + '</button>';
   }).join('') + '</div>';
   h += '<div class="label" style="margin-top:1rem">Ukuran teks</div><div class="seg">' + TEKS.map(function (t) {
     return '<button type="button" data-act="teks" data-v="' + t[0] + '" aria-pressed="' + (prefs.teks === t[0]) + '">' + t[1] + '</button>';
@@ -1265,7 +1287,7 @@ function renderScreen() {
   const s = st.screen;
   let h = '<div class="screen-in">';
   if (s.kind === 'welcome') {
-    h += '<img class="logo" src="icons/icon-192.png" alt="">' +
+    h += '<img class="logo" src="icons/icon.svg" alt="" width="72" height="72">' +
       '<h1>' + esc(CONFIG.APP_NAME) + '</h1>' +
       '<p>Uangmu ke mana aja? Catat uang masuk dan keluar dalam hitungan detik. Datanya tersimpan di Google Sheets milikmu sendiri.</p>' +
       (s.error ? '<div class="err">' + esc(s.error) + '</div>' : '');
@@ -1475,6 +1497,13 @@ const ACT = {
   'nota-foto': function () { bukaPemilihNota('notaFoto'); },
   'nota-galeri': function () { bukaPemilihNota('notaFile'); },
   kabar: openKabar,
+  'kategori-semua': function () {
+    st.form.katSemua = true;
+    renderCatat();
+    // Fokus ke kategori pertama yang baru tampil (pengguna papan ketik / pembaca layar).
+    const c = document.querySelectorAll('#chipsKategori .chip[data-act="kategori"]')[KAT_AWAL];
+    if (c) focusEl(c);
+  },
   'nota-pilih': function (el) { st.form.nominal = el.getAttribute('data-v'); renderAmount(); },
   'nota-batal': function () { closeSheet(false); },
   status: function () {
