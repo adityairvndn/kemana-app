@@ -4,6 +4,18 @@
 
 export const KABAR = [
   {
+    versi: '1.4.0', tanggal: '6 Nov 2026', judul: 'Tampilan baru',
+    butir: [
+      'Ikon aplikasi baru: huruf k di atas warna hijau petrol.',
+      'Tampilan lebih bersih dan tenang, dengan huruf bawaan HP-mu supaya terbuka lebih cepat.',
+      'Nominal lebih menonjol, dan tombol angka lebih ringan dilihat.',
+      'Kategori yang paling sering kamu pakai tampil duluan. Sisanya ada di tombol "Semua kategori".',
+      'Di Riwayat, catatanmu jadi judul transaksi supaya lebih mudah dikenali.',
+      'Tema Biru Laut sekarang gelap, dan ada tema baru Sage.',
+      'Aplikasi bisa dipakai dalam posisi HP miring.'
+    ]
+  },
+  {
     versi: '1.3.1', tanggal: '2 Nov 2026', judul: 'Tombol Kembali lebih rapi',
     butir: [
       'Dari halaman Riwayat, Ringkasan, atau Pengaturan, tombol Kembali membawamu ke Catat dulu.',

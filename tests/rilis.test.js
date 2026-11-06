@@ -66,11 +66,35 @@ test('file yang dirujuk index.html, CSS, dan manifest masuk SHELL', function () 
   });
 });
 
-test('tidak ada permintaan ke pihak ketiga untuk font (cepat, offline, privat)', function () {
-  const html = read('index.html');
-  assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(html), 'index.html masih merujuk Google Fonts');
-  assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(sw), 'sw.js masih merujuk Google Fonts');
-  assert.ok(fs.existsSync(path.join(root, 'fonts/OFL.txt')), 'lisensi font (fonts/OFL.txt) harus ikut');
+test('tidak ada font yang diunduh: memakai font bawaan sistem (design.md §7.4)', function () {
+  const html = read('index.html'), css = read('css/app.css');
+  assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(html + sw), 'masih merujuk Google Fonts');
+  assert.ok(!/@font-face/.test(css), 'css/app.css tidak boleh memuat @font-face');
+  assert.ok(!/rel="preload"[^>]*as="font"/.test(html), 'index.html tidak boleh preload font');
+  assert.match(css, /font-family: var\(--font-body\)/);
+});
+
+test('ikon sprite: setiap <use href="#..."> punya simbolnya di index.html', function () {
+  const html = read('index.html').replace(/<!--[\s\S]*?-->/g, ''), js = read('js/app.js');
+  const ada = new Set(Array.from(html.matchAll(/<symbol id="([^"]+)"/g)).map(function (m) { return m[1]; }));
+  Array.from((html + js).matchAll(/<use href=\\?"#([^"\\]+)\\?"/g)).forEach(function (m) {
+    assert.ok(ada.has(m[1]), 'ikon #' + m[1] + ' dipakai tapi tidak ada di sprite');
+  });
+  // ID simbol tidak boleh sama dengan ID elemen aplikasi ($('cari') harus menemukan kotak cari, bukan ikonnya).
+  const tanpaSprite = html.replace(/<svg class="sprite"[\s\S]*?<\/svg>/, '');
+  const idElemen = new Set(Array.from(tanpaSprite.matchAll(/\sid="([^"]+)"/g)).map(function (m) { return m[1]; })
+    .concat(Array.from(js.matchAll(/\$\('([^']+)'\)/g)).map(function (m) { return m[1]; })));
+  ada.forEach(function (id) { assert.ok(!idElemen.has(id), 'ID simbol ikon "' + id + '" bentrok dengan elemen aplikasi'); });
+});
+
+test('tema: daftar di boot.js, pilihan Pengaturan, dan token CSS sama', function () {
+  const boot = read('js/boot.js'), css = read('css/app.css'), app = read('js/app.js');
+  const whitelist = JSON.parse(boot.match(/\[('otomatis'[^\]]*)\]/)[0].replace(/'/g, '"'));
+  const pilihan = Array.from(app.matchAll(/\['([a-z]+)', '[^']+', \[/g)).map(function (m) { return m[1]; });
+  assert.deepEqual(pilihan.slice().sort(), whitelist.slice().sort(), 'THEMES di app.js dan whitelist boot.js berbeda');
+  whitelist.filter(function (x) { return x !== 'otomatis'; }).forEach(function (x) {
+    assert.ok(css.indexOf('[data-theme="' + x + '"] {') >= 0 || css.indexOf('[data-theme="' + x + '"]') >= 0, 'token tema ' + x + ' tidak ada di CSS');
+  });
 });
 
 test('toast yang tidak tampil benar-benar tersembunyi (bukan hanya digeser)', function () {

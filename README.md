@@ -27,19 +27,20 @@ Datanya tersimpan di **Google Sheets milikmu sendiri**. Tidak ada server, tidak 
 - **Mulai dengan saldo yang benar**: setelah spreadsheet dibuat (atau data contoh dihapus), aplikasi menanyakan uangmu ada di mana saja dan berapa saldonya.
 - **Dompet dan kategori bebas diatur**: tambah, ganti nama (riwayat ikut berubah), sembunyikan, atau hapus kalau belum pernah dipakai.
 - **Tetap jalan tanpa internet**: catatan disimpan di perangkat dan dikirim ke spreadsheet begitu online.
-- **5 tema dan 3 ukuran teks**, supaya nyaman dipakai siapa saja:
+- **6 tema dan 3 ukuran teks**, supaya nyaman dipakai siapa saja:
 
   | Tema | Cocok untuk |
   | --- | --- |
-  | Terang | Bawaan, bersih dengan aksen hijau khas Kemana |
+  | Terang | Bawaan, putih hangat dengan aksen koral |
   | Gelap | Malam hari, hemat baterai di layar OLED |
-  | Biru Laut | Biru kalem yang klasik |
   | Krem | Hangat dan lembut di mata, tidak silau |
+  | Biru Laut | Gelap kebiruan (navy), lebih berkarakter dari Gelap |
+  | Sage | Hijau pucat yang tenang |
   | Kontras tinggi | Penglihatan kurang, garis tebal dan teks tegas |
 
   Ada juga pilihan **Ikuti HP**, yang otomatis memakai tema terang atau gelap sesuai pengaturan perangkat. Ukuran teksnya: Normal, Besar dan Sangat besar.
 
-  ![Lima tema](docs/tema.png)
+  ![Enam tema](docs/tema.png)
 
 - **Mode demo**: coba semua fitur tanpa login, datanya hanya di perangkat itu.
 - **Bisa dipasang seperti aplikasi** di Android, iPhone/iPad, Windows, macOS dan Linux (PWA).
@@ -190,8 +191,8 @@ Saat pengguna membuka aplikasi, kolom baru ditambahkan di ujung kanan sheet. Pen
 
 | File | Isi |
 | --- | --- |
-| `index.html`, `css/app.css` | Tampilan |
-| `fonts/` | Font Plus Jakarta Sans (subset Latin, 24 KB) yang ikut di dalam aplikasi, jadi tidak ada permintaan ke Google Fonts. Berlisensi SIL OFL 1.1 |
+| `index.html`, `css/app.css` | Tampilan. Token warna enam tema ada di bagian atas `css/app.css`; ikon UI berupa sprite SVG di `index.html` (`<use href="#i-nama">`). Font memakai font bawaan sistem, tanpa unduhan |
+| `docs/design.md` | Panduan desain dan UX Kemana: prinsip, token, aturan tiap layar, aksesibilitas, dan skenario uji |
 | `js/app.js` | Alur aplikasi dan layar |
 | `js/schema.js` | Pakem spreadsheet: sheet, kolom, versi dan migrasi |
 | `js/sheets.js` | Baca dan tulis Google Sheets |
@@ -204,14 +205,12 @@ Saat pengguna membuka aplikasi, kolom baru ditambahkan di ujung kanan sheet. Pen
 | `js/config.js` | **Pengaturan yang kamu isi** |
 | `sw.js`, `manifest.webmanifest` | Supaya bisa dipasang dan dibuka offline |
 | `js/boot.js`, `js/nomodule.js` | Memasang tema sebelum tampil (mencegah kedip warna), dan pesan untuk browser yang terlalu lama |
-| `icons/` | Ikon aplikasi: `icon.svg` (sumber dan favicon), PNG 192/512, `maskable` untuk Android, 180 untuk iPhone |
+| `icons/` | Ikon aplikasi (huruf k di atas gradien petrol): `icon.svg` (favicon dan logo), `favicon-32.png`, PNG 192/512, `maskable` untuk Android, 180 untuk iPhone |
 | `tests/` | Tes logika inti dan pemeriksaan rilis (`npm test`) |
 
 ## Lisensi
 
 [MIT](LICENSE): bebas dipakai, diubah dan dibagikan.
-
-Font di `fonts/` adalah [Plus Jakarta Sans](https://github.com/tokotype/PlusJakartaSans) dengan lisensi SIL Open Font License 1.1 (`fonts/OFL.txt`).
 
 File di `vendor/tesseract/` berasal dari [tesseract.js-core](https://github.com/naptha/tesseract.js-core) dan [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast), berlisensi Apache 2.0 (salinan lisensinya ada di folder yang sama).
 
