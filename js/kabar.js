@@ -4,6 +4,13 @@
 
 export const KABAR = [
   {
+    versi: '1.4.1', tanggal: '6 Nov 2026', judul: 'Warna hijau petrol',
+    butir: [
+      'Tombol utama, menu yang aktif, dan pilihan yang terpilih sekarang berwarna hijau petrol, serasi dengan ikon aplikasi.',
+      'Warna merah, hijau, dan biru untuk pengeluaran, pemasukan, dan transfer tetap sama.'
+    ]
+  },
+  {
     versi: '1.4.0', tanggal: '6 Nov 2026', judul: 'Tampilan baru',
     butir: [
       'Ikon aplikasi baru: huruf k di atas warna hijau petrol.',

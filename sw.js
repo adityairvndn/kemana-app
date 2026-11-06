@@ -11,7 +11,7 @@
 // Kalau tidak, ponsel yang sudah memasang aplikasi tidak akan menerima pembaruan.
 // Kesamaan keduanya dan kelengkapan daftar SHELL diperiksa oleh `npm test` (tests/rilis.test.js).
 
-const VERSION = '1.4.0';
+const VERSION = '1.4.1';
 const CACHE = 'kemana-' + VERSION;
 // Mesin pembaca nota (±4 MB) disimpan terpisah supaya tidak diunduh ulang setiap aplikasi diperbarui.
 const OCR_CACHE = 'kemana-ocr-v1';

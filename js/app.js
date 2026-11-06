@@ -24,13 +24,13 @@ const LS = {
 
 // Warna contoh = latar, permukaan, aksen dari token tema (css/app.css). Biru Laut sekarang tema gelap (navy).
 const THEMES = [
-  ['otomatis', 'Ikuti HP', ['#FAFAF9', '#151719', '#FF8878']],
-  ['terang', 'Terang', ['#FAFAF9', '#FFFFFF', '#FF8878']],
-  ['gelap', 'Gelap', ['#151719', '#202326', '#FF9585']],
-  ['krem', 'Krem', ['#F6F0E6', '#FFFCF6', '#FF8878']],
-  ['biru', 'Biru Laut', ['#0D1B2A', '#16283B', '#FF9585']],
-  ['sage', 'Sage', ['#F0F4EE', '#FBFCF8', '#FF8878']],
-  ['kontras', 'Kontras Tinggi', ['#FFFFFF', '#000000', '#0030B8']]
+  ['otomatis', 'Ikuti HP', ['#FAFAF9', '#151719', '#355F65']],
+  ['terang', 'Terang', ['#FAFAF9', '#FFFFFF', '#355F65']],
+  ['gelap', 'Gelap', ['#151719', '#202326', '#9FC6C9']],
+  ['krem', 'Krem', ['#F6F0E6', '#FFFCF6', '#355F65']],
+  ['biru', 'Biru Laut', ['#0D1B2A', '#16283B', '#9FC6C9']],
+  ['sage', 'Sage', ['#F0F4EE', '#FBFCF8', '#355F65']],
+  ['kontras', 'Kontras Tinggi', ['#FFFFFF', '#000000', '#000000']]
 ];
 const THEME_BG = { terang: '#FAFAF9', gelap: '#151719', krem: '#F6F0E6', biru: '#0D1B2A', sage: '#F0F4EE', kontras: '#FFFFFF' };
 const TEKS = [['normal', 'Normal'], ['besar', 'Besar'], ['sangat', 'Sangat besar']];
@@ -1288,7 +1288,7 @@ function renderScreen() {
   let h = '<div class="screen-in">';
   if (s.kind === 'welcome') {
     h += '<img class="logo" src="icons/icon.svg" alt="" width="72" height="72">' +
-      '<h1>' + esc(CONFIG.APP_NAME) + '</h1>' +
+      '<h1 class="wordmark">' + esc(CONFIG.APP_NAME.toLowerCase()) + '</h1>' +
       '<p>Uangmu ke mana aja? Catat uang masuk dan keluar dalam hitungan detik. Datanya tersimpan di Google Sheets milikmu sendiri.</p>' +
       (s.error ? '<div class="err">' + esc(s.error) + '</div>' : '');
     if (G.configured()) {

@@ -7,7 +7,7 @@ export const CONFIG = {
   GOOGLE_CLIENT_ID: '',
 
   APP_NAME: 'Kemana',
-  APP_VERSION: '1.4.0',
+  APP_VERSION: '1.4.1',
 
   // Judul spreadsheet yang dibuat di Google Drive pengguna.
   SPREADSHEET_TITLE: 'Kemana - Catatan Keuangan',

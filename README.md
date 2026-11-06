@@ -31,7 +31,7 @@ Datanya tersimpan di **Google Sheets milikmu sendiri**. Tidak ada server, tidak 
 
   | Tema | Cocok untuk |
   | --- | --- |
-  | Terang | Bawaan, putih hangat dengan aksen koral |
+  | Terang | Bawaan, putih hangat dengan aksen hijau petrol |
   | Gelap | Malam hari, hemat baterai di layar OLED |
   | Krem | Hangat dan lembut di mata, tidak silau |
   | Biru Laut | Gelap kebiruan (navy), lebih berkarakter dari Gelap |

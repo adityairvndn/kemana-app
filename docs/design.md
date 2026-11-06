@@ -1,7 +1,7 @@
 <!-- Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 · original Kemana system inspired by Dime UI principles -->
 # Kemana — Design & UX Specification
 
-Versi: 1.2  
+Versi: 1.3  
 Tanggal: 6 November 2026  
 Status: spesifikasi untuk implementasi; belum merupakan hasil implementasi atau sertifikasi kompatibilitas.
 
@@ -92,7 +92,7 @@ Ini merupakan penilaian visual dari demo, bukan hasil penelitian pengguna atau p
 | Genre | Minimalis fungsional untuk aplikasi pencatatan uang |
 | Struktur | Form pencatatan yang menonjolkan nominal, daftar transaksi per tanggal, ringkasan saldo dan kategori |
 | Referensi utama | Prinsip tampilan Dime: hierarki nominal, ruang yang cukup, kontrol yang tenang, daftar yang mudah dipindai |
-| Identitas Kemana | Bahasa Indonesia, ikon k petrol, istilah Catat/Riwayat/Ringkasan/Pengaturan, serta alur dompet yang sudah ada |
+| Identitas Kemana | Bahasa Indonesia, ikon k dan aksen UI petrol, istilah Catat/Riwayat/Ringkasan/Pengaturan, serta alur dompet yang sudah ada |
 | Tipografi | Satu keluarga font bawaan sistem; perbedaan melalui ukuran dan ketebalan |
 | Permukaan | Latar netral; surface digunakan ketika pengelompokan membantu pemahaman |
 | Interaksi | Respons segera, penjelasan status yang jujur, pemulihan kesalahan yang sederhana |
@@ -238,14 +238,14 @@ Rujukan: [MDN — env() dan safe area](https://developer.mozilla.org/en-US/docs/
 
 ### 7.1 Sumber kebenaran
 
-Sumber token runtime kanonis sekarang adalah [tokens.css](kemana-assets/assets/tokens.css) pada paket aset versi 1.1. Blok di bawah mencerminkan file tersebut. Saat integrasi, petakan ke peran variabel proyek yang sudah ada; jangan mempertahankan dua palette mandiri. Aset dan CSS sudah dibuat, tetapi belum dipasang pada app live.
+Sumber token runtime kanonis sekarang adalah [tokens.css](kemana-assets/assets/tokens.css) pada paket aset versi 1.3. Blok di bawah mencerminkan file tersebut. Saat integrasi, petakan ke peran variabel proyek yang sudah ada; jangan mempertahankan dua palette mandiri. Aset dan CSS sudah dibuat, tetapi belum dipasang pada app live.
 
 Baseline menggunakan sRGB/hex agar sederhana. OKLCH atau `color-mix()` boleh dipakai sebagai enhancement dengan fallback yang setara. Tidak perlu menambah polyfill atau pipeline warna.
 
 ### 7.2 Warna, ukuran, dan motion
 
 ```css
-/* Hallmark · macrostructure: functional app · tone: restrained · anchor hue: coral · pre-emit critique: P5 H5 E4 S5 R5 V4 */
+/* Kemana · functional app · primary hue: petrol · system fonts */
 :root {
   --font-body: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --font-display: var(--font-body);
@@ -286,14 +286,14 @@ Baseline menggunakan sRGB/hex agar sederhana. OKLCH atau `color-mix()` boleh dip
   --color-text-secondary: #59616D;
   --color-border: #D9DEE5;
   --color-control-border: #77818E;
-  --color-accent: #FF8878;
-  --color-on-accent: #25140F;
-  --color-selected-surface: #FFF0EC;
+  --color-accent: #355F65;
+  --color-on-accent: #F7F8F5;
+  --color-selected-surface: #E6EFF0;
   --color-expense: #B93F38;
   --color-income: #177247;
   --color-transfer: #245FD1;
-  --color-focus: #245FD1;
-  --color-link: #A93D31;
+  --color-focus: #355F65;
+  --color-link: #355F65;
   --color-warning: #805000;
   --color-warning-surface: #FDF1DC;
   --color-expense-surface: #FBEAE8;
@@ -311,14 +311,14 @@ Baseline menggunakan sRGB/hex agar sederhana. OKLCH atau `color-mix()` boleh dip
   --color-text-secondary: #B2B8C0;
   --color-border: #444A52;
   --color-control-border: #8C96A3;
-  --color-accent: #FF9585;
-  --color-on-accent: #281510;
-  --color-selected-surface: #382D2B;
+  --color-accent: #9FC6C9;
+  --color-on-accent: #142D31;
+  --color-selected-surface: #243C40;
   --color-expense: #FF9C91;
   --color-income: #7BD8A3;
   --color-transfer: #9DBFFF;
-  --color-focus: #9DBFFF;
-  --color-link: #FFB4A7;
+  --color-focus: #9FC6C9;
+  --color-link: #9FC6C9;
   --color-warning: #FFE199;
   --color-warning-surface: #3D3321;
   --color-expense-surface: #3B2828;
@@ -336,14 +336,14 @@ Baseline menggunakan sRGB/hex agar sederhana. OKLCH atau `color-mix()` boleh dip
   --color-text-secondary: #65594C;
   --color-border: #D8CCB9;
   --color-control-border: #81715F;
-  --color-accent: #FF8878;
-  --color-on-accent: #25140F;
-  --color-selected-surface: #F9E5DB;
+  --color-accent: #355F65;
+  --color-on-accent: #F7F8F5;
+  --color-selected-surface: #E2ECE9;
   --color-expense: #A3352B;
   --color-income: #24613E;
   --color-transfer: #2D5597;
-  --color-focus: #2D5597;
-  --color-link: #973C30;
+  --color-focus: #355F65;
+  --color-link: #355F65;
   --color-warning: #775008;
   --color-warning-surface: #F5E9C9;
   --color-expense-surface: #F6E3DA;
@@ -361,14 +361,14 @@ Baseline menggunakan sRGB/hex agar sederhana. OKLCH atau `color-mix()` boleh dip
   --color-text-secondary: #B6C5D8;
   --color-border: #3A5069;
   --color-control-border: #819AB6;
-  --color-accent: #FF9585;
-  --color-on-accent: #281510;
-  --color-selected-surface: #3E2D31;
+  --color-accent: #9FC6C9;
+  --color-on-accent: #142D31;
+  --color-selected-surface: #213F49;
   --color-expense: #FFAAA0;
   --color-income: #8BE0AC;
   --color-transfer: #AACBFF;
-  --color-focus: #AACBFF;
-  --color-link: #FFB4A7;
+  --color-focus: #A7D3D4;
+  --color-link: #A7D3D4;
   --color-warning: #FFE09A;
   --color-warning-surface: #403829;
   --color-expense-surface: #442D39;
@@ -392,8 +392,8 @@ Baseline menggunakan sRGB/hex agar sederhana. OKLCH atau `color-mix()` boleh dip
   --color-expense: #A30000;
   --color-income: #005A1E;
   --color-transfer: #0030B8;
-  --color-focus: #0030B8;
-  --color-link: #0030B8;
+  --color-focus: #000000;
+  --color-link: #000000;
   --color-warning: #6B3D00;
   --color-warning-surface: #FFFFFF;
   --color-expense-surface: #FFFFFF;
@@ -411,14 +411,14 @@ Baseline menggunakan sRGB/hex agar sederhana. OKLCH atau `color-mix()` boleh dip
   --color-text-secondary: #4C5E51;
   --color-border: #C5D0C0;
   --color-control-border: #6C7D6F;
-  --color-accent: #FF8878;
-  --color-on-accent: #25140F;
-  --color-selected-surface: #F5E6DB;
+  --color-accent: #355F65;
+  --color-on-accent: #F7F8F5;
+  --color-selected-surface: #E0EBE5;
   --color-expense: #A5342C;
   --color-income: #255E3B;
   --color-transfer: #2A5593;
-  --color-focus: #2A5593;
-  --color-link: #963E31;
+  --color-focus: #355F65;
+  --color-link: #355F65;
   --color-warning: #745009;
   --color-warning-surface: #F0E8D0;
   --color-expense-surface: #F4E2DA;
@@ -437,14 +437,14 @@ Baseline menggunakan sRGB/hex agar sederhana. OKLCH atau `color-mix()` boleh dip
   --color-text-secondary: #B2B8C0;
   --color-border: #444A52;
   --color-control-border: #8C96A3;
-  --color-accent: #FF9585;
-  --color-on-accent: #281510;
-  --color-selected-surface: #382D2B;
+  --color-accent: #9FC6C9;
+  --color-on-accent: #142D31;
+  --color-selected-surface: #243C40;
   --color-expense: #FF9C91;
   --color-income: #7BD8A3;
   --color-transfer: #9DBFFF;
-  --color-focus: #9DBFFF;
-  --color-link: #FFB4A7;
+  --color-focus: #9FC6C9;
+  --color-link: #9FC6C9;
   --color-warning: #FFE199;
   --color-warning-surface: #3D3321;
   --color-expense-surface: #3B2828;
@@ -461,8 +461,12 @@ Baseline menggunakan sRGB/hex agar sederhana. OKLCH atau `color-mix()` boleh dip
 
 ### 7.3 Penggunaan warna
 
-- Coral menandai CTA utama dan pilihan aktif secara hemat.
-- Gunakan `--color-on-accent` untuk teks tombol coral. Jangan menggantinya dengan putih tanpa memeriksa kontras.
+- Petrol adalah aksen utama untuk CTA, link, navigasi aktif, dan focus ring. Gunakan warna solid secara hemat, dengan hierarki yang tetap terbaca tanpa warna.
+- Terang/Krem/Sage memakai `--color-accent: #355F65` dan teks CTA `#F7F8F5`. Gelap/Biru Laut memakai petrol terang `#9FC6C9` dan teks CTA gelap `#142D31`. Kontras Tinggi memakai hitam-putih.
+- Gunakan `--color-on-accent` untuk label CTA sesuai tema; link dan ikon aktif memakai `--color-link`, focus ring memakai `--color-focus`. Warna brand datar tidak dipaksakan pada semua tema bila mengurangi keterbacaan.
+- Selected surface memakai tint petrol. Keadaan terpilih tetap mempunyai label, check, atau batas yang jelas. Teks link dibedakan dengan underline atau konteks kontrol.
+- Gradient tipis dibatasi pada latar ikon launcher. Tombol, form, kartu, dan navigasi menggunakan warna solid.
+- Merah untuk pengeluaran/error, hijau untuk pemasukan, biru untuk transfer, dan warna peringatan mengikuti token semantik; petrol tidak mengambil alih makna tersebut.
 - Pemasukan/pengeluaran/transfer dibedakan lewat label, tanda, dan konteks; warna merupakan penguat.
 - `--color-border` hanya untuk pemisah dekoratif/pengelompokan. Jika garis diperlukan untuk mengenali kontrol, gunakan `--color-control-border` atau indikator lain yang cukup kontras.
 - Jangan menurunkan opacity seluruh card untuk membuat teks sekunder; gunakan token warna teks yang sesuai.
@@ -474,14 +478,14 @@ Pemeriksaan numerik sRGB mencakup enam tema. Teks diperiksa terhadap background,
 
 | Tema | Teks utama | Sekunder | Teks semantik terendah | Link | Teks CTA | Batas kontrol |
 | --- | --- | --- | --- | --- | --- | --- |
-| Terang | 15.68:1 | 5.63:1 | 4.93:1 | 5.55:1 | 7.63:1 | 3.55:1 |
-| Gelap | 12.17:1 | 6.66:1 | 6.60:1 | 7.82:1 | 8.21:1 | 4.44:1 |
-| Krem | 12.46:1 | 5.49:1 | 5.47:1 | 5.64:1 | 7.63:1 | 3.80:1 |
-| Biru Laut | 11.32:1 | 7.05:1 | 6.79:1 | 7.27:1 | 8.21:1 | 4.26:1 |
-| Kontras Tinggi | 21.00:1 | 17.40:1 | 8.21:1 | 9.93:1 | 21.00:1 | 21.00:1 |
-| Sage | 12.00:1 | 5.68:1 | 5.50:1 | 5.67:1 | 7.63:1 | 3.58:1 |
+| Terang | 14.93:1 | 5.36:1 | 4.69:1 | 6.04:1 | 6.62:1 | 3.38:1 |
+| Gelap | 10.70:1 | 5.85:1 | 5.80:1 | 6.35:1 | 7.86:1 | 3.90:1 |
+| Krem | 12.46:1 | 5.49:1 | 5.47:1 | 5.70:1 | 6.62:1 | 3.80:1 |
+| Biru Laut | 10.25:1 | 6.39:1 | 6.15:1 | 6.90:1 | 7.86:1 | 3.86:1 |
+| Kontras Tinggi | 21.00:1 | 17.40:1 | 8.21:1 | 21.00:1 | 21.00:1 | 21.00:1 |
+| Sage | 12.00:1 | 5.68:1 | 5.50:1 | 5.77:1 | 6.62:1 | 3.58:1 |
 
-Coral fill tidak dipakai sebagai warna teks kecil pada surface terang. Link, ikon aktif, dan petunjuk terpilih memakai `--color-link`; focus ring memakai `--color-focus`. Pemeriksaan token tidak menggantikan pemeriksaan UI terintegrasi, opacity, state, dan background sebenarnya. Detail rasio terdapat di [laporan aset](kemana-assets/asset-report.json).
+Petrol untuk teks dan kontrol mengikuti nilai per tema. Teks CTA memakai `--color-on-accent`; tinta terang pada CTA gelap dan tinta gelap pada CTA terang. Link/ikon aktif memakai `--color-link`, focus ring memakai `--color-focus`. Kontras Tinggi memakai hitam-putih. Pemeriksaan token tidak menggantikan pemeriksaan UI terintegrasi, opacity, state, dan background sebenarnya. Detail rasio terdapat di [laporan aset](kemana-assets/asset-report.json).
 
 ### 7.4 Tipografi dan angka
 
@@ -508,12 +512,12 @@ Coral fill tidak dipakai sebagai warna teks kecil pada surface terang. Link, iko
 
 | Label | ID existing/stabil | Mode | Peran |
 | --- | --- | --- | --- |
-| Terang | `terang` | Light | Putih hangat; default visual |
-| Gelap | `gelap` | Dark | Arang netral dengan coral lembut |
-| Krem | `krem` | Light | Gading hangat, teks cokelat gelap |
-| Biru Laut | `biru` | Dark | Navy; variasi gelap yang lebih berkarakter |
+| Terang | `terang` | Light | Putih hangat, petrol #355F65; default visual |
+| Gelap | `gelap` | Dark | Arang netral dengan petrol terang #9FC6C9 |
+| Krem | `krem` | Light | Gading hangat, petrol #355F65, teks cokelat gelap |
+| Biru Laut | `biru` | Dark | Navy dengan petrol terang #9FC6C9 |
 | Kontras Tinggi | `kontras` | Light | Hitam-putih, batas tegas, CTA hitam-putih |
-| Sage | `sage` | Light | Hijau pucat netral; opsional |
+| Sage | `sage` | Light | Hijau pucat netral, petrol #355F65; opsional |
 
 - Lima tema pertama merupakan set utama. Sage disiapkan tetapi opsi di pengaturan boleh belum ditampilkan.
 - `otomatis`/Ikuti perangkat adalah preferensi yang memilih Terang atau Gelap, bukan tema tambahan.
@@ -522,7 +526,7 @@ Coral fill tidak dipakai sebagai warna teks kecil pada surface terang. Link, iko
 - Tema tidak mengganti layout, font, ukuran target sentuh, ikon, atau makna jenis transaksi. Kontras Tinggi boleh mempertegas garis dengan `--rule-thin: 2px`.
 - Saat mode otomatis dipilih, perubahan tema OS ketika app aktif diikuti tanpa menghapus draft. Saat tema eksplisit dipilih, OS tidak menimpanya.
 - Biru Laut pada CSS live yang diperiksa masih biru terang. Rancangan baru yang disepakati adalah navy gelap dengan ID `biru` tetap; perubahan ini perlu ditunjukkan dengan label/deskripsi yang jelas.
-- Ikon instalasi memakai k putih gading pada gradient petrol yang konsisten pada semua tema. Token kontrol UI dan warna semantik mengikuti tabel tema, bukan warna gradient launcher.
+- Ikon instalasi memakai k putih gading pada gradient petrol yang konsisten pada semua tema. Kontrol UI memakai aksen petrol solid yang disesuaikan dengan terang/gelap; Kontras Tinggi memakai hitam-putih. Warna transaksi dan peringatan tetap semantik.
 
 ### 7.7 Paket aset dan aturan pemuatan
 
@@ -540,6 +544,8 @@ Coral fill tidak dipakai sebagai warna teks kecil pada surface terang. Link, iko
 - Simbol: #F7F8F5. Latar: gradient tipis #416F74 ke #2E5359, dari kiri atas ke kanan bawah. Warna brand datar: #355F65. Gradient hanya pada latar, tanpa tekstur, bayangan, atau efek timbul.
 - Master full-bleed: [icon-square.svg](kemana-assets/sources/icon-square.svg). Untuk presentasi web: [icon.svg](kemana-assets/assets/brand/icon.svg). Simbol monokrom tanpa latar: [mark.svg](kemana-assets/assets/brand/mark.svg).
 - Ikon launcher memuat simbol k saja. Wordmark kemana pada draft merupakan elemen terpisah, sehingga tidak mengecilkan simbol di layar utama perangkat.
+- Penulisan wordmark adalah kemana, huruf kecil, sans-serif yang bersih dengan ketebalan sedang dan spasi alami. Metadata/nama produk tetap Kemana. Wordmark tidak menambah kewajiban memuat font; teks UI memakai system font. Master ikon tidak mengandung teks atau bergantung pada file font.
+- Prinsip dari kolase referensi pengguna: hubungan huruf awal dan nama (Notion), konstruksi dengan ruang kosong yang jelas (CapCut), serta simbol kontras pada bidang warna (Cash App). Bentuk khusus merek referensi tidak disalin; identitas Kemana memakai konstruksi k yang dipilih pengguna.
 - Semua PNG instalasi berlatar opak hingga tepi dan menggunakan geometri yang sama. Area penting tetap dalam lingkaran pusat beradius 40% kanvas; sudut serta pemotongan ikon mengikuti OS. Favicon SVG memakai sudut membulat untuk tampilan browser.
 - [Pratinjau ikon](kemana-assets/preview/icon-sheet.png) memperlihatkan potongan kotak membulat, lingkaran, area aman, dan ukuran kecil. Ini pratinjau aset; uji instalasi pada perangkat dilakukan setelah integrasi.
 - Artefak PNG draft tidak dimuat ke aplikasi; gunakan aset produksi SVG/PNG kecil pada paket ini. Tidak ada dependency atau font baru untuk ikon.
@@ -1095,7 +1101,7 @@ Tidak perlu menunggu seluruh arsitektur ideal untuk merilis perbaikan kecil. Set
 
 ## 23. Exports dan pemeliharaan sistem
 
-- Deliverable versi 1.2: `design.md`, paket `kemana-assets/`, dan arsip `kemana-assets.zip`. Token, SVG, PNG, pratinjau, panduan integrasi, serta laporan ukuran disertakan.
+- Deliverable versi 1.3: `design.md`, paket `kemana-assets/`, dan arsip `kemana-assets.zip`. Token, SVG, PNG, pratinjau, panduan integrasi, serta laporan ukuran disertakan.
 - File `kemana-assets/assets/tokens.css` menjadi acuan palette/aset. Saat integrasi ke proyek, pindahkan/petakan ke satu sumber token existing; blok dokumentasi diperbarui bersama sumber runtime.
 - Tidak perlu mengekspor Tailwind theme, DTCG JSON, shadcn variables, atau design system package jika proyek tidak memakainya.
 - Seluruh layar menggunakan peran warna dan interaksi yang sama. Variasi tema mengubah token, bukan makna aksi atau navigasi.
@@ -1136,3 +1142,4 @@ Referensi awal diperiksa pada 2 November 2026; sumber aset/tema dan rujukan SVG 
 - 1.0 — 2 November 2026: spesifikasi UX/UI awal.
 - 1.1 — 3 November 2026: lima tema utama + Sage opsional, token runtime, aset pin-koin existing dan SVG UI, laporan kontras/ukuran, serta panduan integrasi tanpa dependency baru.
 - 1.2 — 6 November 2026: ikon k pilihan pengguna menjadi identitas launcher; master SVG, gradient petrol, ekspor PWA/favicon/Apple, pratinjau potongan dan ukuran kecil. Paket aset siap integrasi; kode aplikasi live belum tersedia di workspace.
+- 1.3 — 6 November 2026: aksen utama UI beralih dari coral ke petrol di lima tema berwarna, Kontras Tinggi tetap hitam-putih; pasangan teks CTA, link, focus ring, selected surface, spesifikasi wordmark, token CSS, pratinjau, dan rasio kontras diselaraskan. Warna semantik transaksi dipertahankan.
